@@ -2,8 +2,10 @@ package endpoint
 
 import (
 	"github.com/mstrhakr/go-cxml/cxml/auth"
+	"github.com/mstrhakr/go-cxml/cxml/builder"
 	"github.com/mstrhakr/go-cxml/cxml/credential"
 	"github.com/mstrhakr/go-cxml/cxml/document"
+	"github.com/mstrhakr/go-cxml/cxml/model"
 	"github.com/mstrhakr/go-cxml/cxml/processor"
 	"github.com/mstrhakr/go-cxml/cxml/serializer"
 	"github.com/mstrhakr/go-cxml/cxml/validation"
@@ -49,17 +51,17 @@ func (e *Endpoint) SetDocumentRegistry(r document.DocumentRegistry) {
 func (e *Endpoint) Process(input []byte) ([]byte, error) {
 	if e.dtdValidator != nil {
 		if err := e.dtdValidator.Validate(input); err != nil {
-			return nil, err
+			return e.serializeErrorResponse("400", err.Error())
 		}
 	}
 
 	doc, err := e.serializer.Deserialize(input)
 	if err != nil {
-		return nil, err
+		return e.serializeErrorResponse("400", err.Error())
 	}
 
 	if err := e.authenticator.Authenticate(doc, e.credentialRepo); err != nil {
-		return nil, err
+		return e.serializeErrorResponse("401", err.Error())
 	}
 
 	if e.documentRegistry != nil && doc != nil && doc.PayloadID != "" {
@@ -68,7 +70,7 @@ func (e *Endpoint) Process(input []byte) ([]byte, error) {
 
 	out, err := e.processor.Process(doc)
 	if err != nil {
-		return nil, err
+		return e.serializeErrorResponse("500", err.Error())
 	}
 
 	if e.documentRegistry != nil && out != nil && out.PayloadID != "" {
@@ -76,4 +78,14 @@ func (e *Endpoint) Process(input []byte) ([]byte, error) {
 	}
 
 	return e.serializer.Serialize(out)
+}
+
+func (e *Endpoint) serializeErrorResponse(code, message string) ([]byte, error) {
+	errorDoc := builder.New().
+		PayloadID("error").
+		Version("1.2.014").
+		Response(&model.Response{Status: &model.Status{Code: code, Text: message}}).
+		Build()
+
+	return e.serializer.Serialize(errorDoc)
 }

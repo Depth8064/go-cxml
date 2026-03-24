@@ -82,6 +82,27 @@ func TestEndpoint_Process_AuthFail(t *testing.T) {
   </Request>
 </cXML>`)
 
-	_, err := ep.Process(input)
-	assert.Error(t, err)
+	output, err := ep.Process(input)
+	assert.NoError(t, err)
+	assert.Contains(t, string(output), "<Response>")
+	assert.Contains(t, string(output), "401")
+}
+
+func TestEndpoint_Process_DTDFail(t *testing.T) {
+	registry := handler.NewRegistry()
+	registry.Register(&basicOrderHandler{})
+
+	proc := processor.NewProcessor(registry)
+	repo := credential.NewRegistry([]*model.Credential{{Domain: "D", Identity: "I", SharedSecret: "S"}})
+	authc := auth.NewSimpleSharedSecretAuthenticator()
+
+	ep := NewEndpoint(proc, authc, repo)
+
+	input := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<cXML payloadID="abc"></cXML>`)
+
+	output, err := ep.Process(input)
+	assert.NoError(t, err)
+	assert.Contains(t, string(output), "<Response>")
+	assert.Contains(t, string(output), "400")
 }
