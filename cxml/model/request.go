@@ -6,6 +6,7 @@ type Request struct {
 	XMLName              xml.Name              `xml:"Request"`
 	DeploymentMode       string                `xml:"deploymentMode,attr,omitempty"`
 	OrderRequest         *OrderRequest         `xml:"OrderRequest,omitempty"`
+	OrderChangeRequest   *OrderChangeRequest   `xml:"OrderChangeRequest,omitempty"`
 	PunchOutOrderMessage *PunchOutOrderMessage `xml:"PunchOutOrderMessage,omitempty"`
 }
 
@@ -13,6 +14,8 @@ func (r *Request) PayloadType() string {
 	switch {
 	case r.OrderRequest != nil:
 		return "OrderRequest"
+	case r.OrderChangeRequest != nil:
+		return "OrderChangeRequest"
 	case r.PunchOutOrderMessage != nil:
 		return "PunchOutOrderMessage"
 	default:
@@ -24,6 +27,12 @@ type OrderRequest struct {
 	XMLName            xml.Name            `xml:"OrderRequest"`
 	OrderRequestHeader *OrderRequestHeader `xml:"OrderRequestHeader,omitempty"`
 	ItemOut            []*ItemOut          `xml:"ItemOut,omitempty"`
+}
+
+type OrderChangeRequest struct {
+	XMLName                xml.Name            `xml:"OrderChangeRequest"`
+	OrderRequestReference  *OrderRequestHeader `xml:"OrderRequestReference,omitempty"`
+	ItemChange             []*ItemOut          `xml:"ItemChange,omitempty"`
 }
 
 type OrderRequestHeader struct {

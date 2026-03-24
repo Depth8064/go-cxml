@@ -42,3 +42,17 @@ func TestOrderRequestBuilder(t *testing.T) {
 	assert.NotNil(t, doc.Request)
 	assert.Equal(t, "order-1", doc.Request.OrderRequest.OrderRequestHeader.OrderID)
 }
+
+func TestOrderChangeBuilder(t *testing.T) {
+	change := &model.OrderChangeRequest{
+		OrderRequestReference: &model.OrderRequestHeader{OrderID: "order-1", OrderDate: "2026-03-24"},
+	}
+	doc := NewOrderChangeBuilder().
+		PayloadID("p3").
+		Request(change).
+		Build()
+
+	assert.NotNil(t, doc)
+	assert.NotNil(t, doc.Request)
+	assert.Equal(t, "order-1", doc.Request.OrderChangeRequest.OrderRequestReference.OrderID)
+}

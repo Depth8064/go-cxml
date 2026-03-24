@@ -28,6 +28,14 @@ func (h *stubPunchOutHandler) Handle(req *model.CXML) (*model.CXML, error) {
 
 func (h *stubPunchOutHandler) Name() string { return "PunchOutOrderMessage" }
 
+type stubOrderChangeHandler struct{}
+
+func (h *stubOrderChangeHandler) Handle(req *model.CXML) (*model.CXML, error) {
+	return &model.CXML{PayloadID: req.PayloadID, Response: &model.Response{Status: &model.Status{Code: "202", Text: "OrderChange Accepted"}}}, nil
+}
+
+func (h *stubOrderChangeHandler) Name() string { return "OrderChangeRequest" }
+
 func TestProcessor_Process_OrderRequest(t *testing.T) {
 	reg := handler.NewRegistry()
 	reg.Register(&stubOrderHandler{})
@@ -56,6 +64,21 @@ func TestProcessor_Process_PunchOutOrderMessage(t *testing.T) {
 	assert.NotNil(t, resp)
 	assert.Equal(t, "x2", resp.PayloadID)
 	assert.Equal(t, "201", resp.Response.Status.Code)
+}
+
+func TestProcessor_Process_OrderChangeRequest(t *testing.T) {
+	reg := handler.NewRegistry()
+	reg.Register(&stubOrderChangeHandler{})
+
+	p := NewProcessor(reg)
+
+	req := &model.CXML{PayloadID: "x3", Request: &model.Request{OrderChangeRequest: &model.OrderChangeRequest{OrderRequestReference: &model.OrderRequestHeader{OrderID: "PO123"}}}}
+	resp, err := p.Process(req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, "x3", resp.PayloadID)
+	assert.Equal(t, "202", resp.Response.Status.Code)
 }
 
 func TestProcessor_Process_NoHandler(t *testing.T) {
