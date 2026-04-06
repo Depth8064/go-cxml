@@ -1,8 +1,8 @@
 package cxml
 
 import (
-	"github.com/mstrhakr/go-cxml/cxml/model"
-	"github.com/mstrhakr/go-cxml/cxml/serializer"
+	"github.com/Depth8064/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/serializer"
 )
 
 // Endpoint is the primary entry point for cXML processing.

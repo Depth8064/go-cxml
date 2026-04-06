@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 
-	"github.com/mstrhakr/go-cxml/cxml/credential"
-	"github.com/mstrhakr/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/credential"
+	"github.com/Depth8064/go-cxml/cxml/model"
 )
 
 type Authenticator interface {

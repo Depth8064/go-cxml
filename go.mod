@@ -1,4 +1,4 @@
-module github.com/mstrhakr/go-cxml
+module github.com/Depth8064/go-cxml
 
 go 1.25.6
 

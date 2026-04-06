@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"github.com/mstrhakr/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/model"
 	"strings"
 )
 

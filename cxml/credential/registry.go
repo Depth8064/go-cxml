@@ -1,6 +1,6 @@
 package credential
 
-import "github.com/mstrhakr/go-cxml/cxml/model"
+import "github.com/Depth8064/go-cxml/cxml/model"
 
 type CredentialRepository interface {
 	Validate(cred *model.Credential) bool

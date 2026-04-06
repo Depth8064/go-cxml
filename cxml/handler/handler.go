@@ -1,6 +1,6 @@
 package handler
 
-import "github.com/mstrhakr/go-cxml/cxml/model"
+import "github.com/Depth8064/go-cxml/cxml/model"
 
 type Handler interface {
 	// Handle processes a request payload and returns a response or error.

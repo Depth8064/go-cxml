@@ -3,8 +3,8 @@ package processor
 import (
 	"errors"
 
-	"github.com/mstrhakr/go-cxml/cxml/handler"
-	"github.com/mstrhakr/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/handler"
+	"github.com/Depth8064/go-cxml/cxml/model"
 )
 
 type Processor struct {

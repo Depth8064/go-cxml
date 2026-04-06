@@ -3,7 +3,7 @@ package serializer
 import (
 	"testing"
 
-	"github.com/mstrhakr/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/model"
 	"github.com/stretchr/testify/assert"
 )
 

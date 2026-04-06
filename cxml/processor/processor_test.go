@@ -3,8 +3,8 @@ package processor
 import (
 	"testing"
 
-	"github.com/mstrhakr/go-cxml/cxml/handler"
-	"github.com/mstrhakr/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/handler"
+	"github.com/Depth8064/go-cxml/cxml/model"
 	"github.com/stretchr/testify/assert"
 )
 

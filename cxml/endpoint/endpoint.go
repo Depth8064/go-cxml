@@ -1,14 +1,14 @@
 package endpoint
 
 import (
-	"github.com/mstrhakr/go-cxml/cxml/auth"
-	"github.com/mstrhakr/go-cxml/cxml/builder"
-	"github.com/mstrhakr/go-cxml/cxml/credential"
-	"github.com/mstrhakr/go-cxml/cxml/document"
-	"github.com/mstrhakr/go-cxml/cxml/model"
-	"github.com/mstrhakr/go-cxml/cxml/processor"
-	"github.com/mstrhakr/go-cxml/cxml/serializer"
-	"github.com/mstrhakr/go-cxml/cxml/validation"
+	"github.com/Depth8064/go-cxml/cxml/auth"
+	"github.com/Depth8064/go-cxml/cxml/builder"
+	"github.com/Depth8064/go-cxml/cxml/credential"
+	"github.com/Depth8064/go-cxml/cxml/document"
+	"github.com/Depth8064/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/processor"
+	"github.com/Depth8064/go-cxml/cxml/serializer"
+	"github.com/Depth8064/go-cxml/cxml/validation"
 )
 
 type Endpoint struct {

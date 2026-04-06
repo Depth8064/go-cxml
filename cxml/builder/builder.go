@@ -1,6 +1,6 @@
 package builder
 
-import "github.com/mstrhakr/go-cxml/cxml/model"
+import "github.com/Depth8064/go-cxml/cxml/model"
 
 type Builder struct {
 	doc *model.CXML

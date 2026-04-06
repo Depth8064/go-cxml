@@ -3,11 +3,11 @@ package endpoint
 import (
 	"testing"
 
-	"github.com/mstrhakr/go-cxml/cxml/auth"
-	"github.com/mstrhakr/go-cxml/cxml/credential"
-	"github.com/mstrhakr/go-cxml/cxml/handler"
-	"github.com/mstrhakr/go-cxml/cxml/model"
-	"github.com/mstrhakr/go-cxml/cxml/processor"
+	"github.com/Depth8064/go-cxml/cxml/auth"
+	"github.com/Depth8064/go-cxml/cxml/credential"
+	"github.com/Depth8064/go-cxml/cxml/handler"
+	"github.com/Depth8064/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/processor"
 	"github.com/stretchr/testify/assert"
 )
 
