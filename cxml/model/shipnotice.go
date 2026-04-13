@@ -56,9 +56,11 @@ type ShipControl struct {
 
 // ShipmentIdentifier is a tracking number or bill of lading reference.
 type ShipmentIdentifier struct {
-	XMLName xml.Name `xml:"ShipmentIdentifier"`
-	Domain  string   `xml:"domain,attr,omitempty"` // e.g. "trackingNumberID", "billOfLadingID"
-	Value   string   `xml:",chardata"`
+	XMLName            xml.Name `xml:"ShipmentIdentifier"`
+	Domain             string   `xml:"domain,attr,omitempty"` // e.g. "trackingNumberID", "billOfLadingID"
+	TrackingNumberDate string   `xml:"trackingNumberDate,attr,omitempty"`
+	TrackingURL        string   `xml:"trackingURL,attr,omitempty"`
+	Value              string   `xml:",chardata"`
 }
 
 // PackageIdentification provides inclusive range of package numbers on the containers.
@@ -120,6 +122,7 @@ type ShipNoticeItemDetail struct {
 	ManufacturerPartID *ManufacturerPartID `xml:"ManufacturerPartID,omitempty"`
 	ManufacturerName   *ManufacturerName   `xml:"ManufacturerName,omitempty"`
 	Dimension          []*Dimension        `xml:"Dimension,omitempty"`
+	ItemDetailIndustry *ItemDetailIndustry `xml:"ItemDetailIndustry,omitempty"`
 	Extrinsic          []*Extrinsic        `xml:"Extrinsic,omitempty"`
 }
 
@@ -135,13 +138,17 @@ type MasterAgreementReference struct {
 	XMLName           xml.Name           `xml:"MasterAgreementReference"`
 	AgreementID       string             `xml:"agreementID,attr,omitempty"`
 	AgreementDate     string             `xml:"agreementDate,attr,omitempty"`
+	AgreementType     string             `xml:"agreementType,attr,omitempty"`
 	DocumentReference *DocumentReference `xml:"DocumentReference,omitempty"`
 }
 
 // MasterAgreementIDInfo identifies a master agreement by its buyer-system ID.
 type MasterAgreementIDInfo struct {
-	XMLName     xml.Name `xml:"MasterAgreementIDInfo"`
-	AgreementID string   `xml:"agreementID,attr,omitempty"`
+	XMLName       xml.Name       `xml:"MasterAgreementIDInfo"`
+	AgreementID   string         `xml:"agreementID,attr,omitempty"`
+	AgreementDate string         `xml:"agreementDate,attr,omitempty"`
+	AgreementType string         `xml:"agreementType,attr,omitempty"`
+	IdReference   []*IdReference `xml:"IdReference,omitempty"`
 }
 
 // ShipNoticeItemIndustry groups industry-specific ship notice item fields.
@@ -163,8 +170,58 @@ type ShipNoticeItemRetail struct {
 
 // ShipNoticeItemLifeSciences contains life-sciences-specific item fields.
 type ShipNoticeItemLifeSciences struct {
-	XMLName xml.Name `xml:"ShipNoticeItemLifeSciences"`
-	Content string   `xml:",innerxml"`
+	XMLName            xml.Name              `xml:"ShipNoticeItemLifeSciences"`
+	Study              []*Study              `xml:"Study,omitempty"`
+	ProtocolID         *ProtocolID           `xml:"ProtocolID,omitempty"`
+	PoolID             *PoolID               `xml:"PoolID,omitempty"`
+	MedicationListInfo []*MedicationListInfo `xml:"MedicationListInfo,omitempty"`
+	Extrinsic          []*Extrinsic          `xml:"Extrinsic,omitempty"`
+}
+
+// ItemDetailIndustry groups industry-specific item detail extensions.
+type ItemDetailIndustry struct {
+	XMLName                xml.Name          `xml:"ItemDetailIndustry"`
+	IsConfigurableMaterial string            `xml:"isConfigurableMaterial,attr,omitempty"`
+	ItemDetailRetail       *ItemDetailRetail `xml:"ItemDetailRetail,omitempty"`
+}
+
+// Study represents a clinical study reference.
+type Study struct {
+	XMLName     xml.Name     `xml:"Study"`
+	StudyID     *StudyID     `xml:"StudyID"`
+	Description *Description `xml:"Description,omitempty"`
+}
+
+// StudyID is the identifier for a clinical study.
+type StudyID struct {
+	XMLName xml.Name `xml:"StudyID"`
+	Value   string   `xml:",chardata"`
+}
+
+// ProtocolID is a clinical protocol identifier.
+type ProtocolID struct {
+	XMLName xml.Name `xml:"ProtocolID"`
+	Value   string   `xml:",chardata"`
+}
+
+// PoolID is a pooling identifier for life-sciences items.
+type PoolID struct {
+	XMLName xml.Name `xml:"PoolID"`
+	Value   string   `xml:",chardata"`
+}
+
+// MedicationListInfo holds a list of named property values for medication.
+type MedicationListInfo struct {
+	XMLName       xml.Name         `xml:"MedicationListInfo"`
+	Type          string           `xml:"type,attr,omitempty"`
+	PropertyValue []*PropertyValue `xml:"PropertyValue,omitempty"`
+}
+
+// PropertyValue is a named property with optional characteristic children.
+type PropertyValue struct {
+	XMLName        xml.Name          `xml:"PropertyValue"`
+	Name           string            `xml:"name,attr,omitempty"`
+	Characteristic []*Characteristic `xml:"Characteristic,omitempty"`
 }
 
 // ShipNoticeReference points back to an earlier ShipNoticeRequest.

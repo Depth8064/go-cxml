@@ -31,7 +31,8 @@ type ShippingPaymentMethod struct {
 // TransportTerms holds additional transport arrangement details.
 type TransportTerms struct {
 	XMLName xml.Name `xml:"TransportTerms"`
-	Value   string   `xml:",chardata"`
+	Value   string   `xml:"value,attr,omitempty"`
+	Text    string   `xml:",chardata"`
 }
 
 // ─── Terms of transport ───────────────────────────────────────────────────────
@@ -106,19 +107,28 @@ type OCInstruction struct {
 type ASNInstruction struct {
 	XMLName xml.Name `xml:"ASNInstruction"`
 	Value   string   `xml:"value,attr"` // (required|notRequired|optional) REQUIRED
+	Lower   *Lower   `xml:"Lower,omitempty"`
+	Upper   *Upper   `xml:"Upper,omitempty"`
 }
 
 // InvoiceInstruction controls invoice handling.
 type InvoiceInstruction struct {
-	XMLName          xml.Name `xml:"InvoiceInstruction"`
-	Value            string   `xml:"value,attr"`                      // (invoiceRequired|invoiceNotRequired|invoiceForbidden|evaluated) REQUIRED
-	VerificationType string   `xml:"verificationType,attr,omitempty"` // (2way|3way|4way)
+	XMLName           xml.Name        `xml:"InvoiceInstruction"`
+	Value             string          `xml:"value,attr"`                      // (invoiceRequired|invoiceNotRequired|invoiceForbidden|evaluated) REQUIRED
+	VerificationType  string          `xml:"verificationType,attr,omitempty"` // (2way|3way|4way)
+	UnitPriceEditable string          `xml:"unitPriceEditable,attr,omitempty"`
+	Lower             *Lower          `xml:"Lower,omitempty"`
+	TemporaryPrice    *TemporaryPrice `xml:"TemporaryPrice,omitempty"`
+	Upper             *Upper          `xml:"Upper,omitempty"`
 }
 
 // SESInstruction controls service entry sheet requirements.
 type SESInstruction struct {
-	XMLName xml.Name `xml:"SESInstruction"`
-	Value   string   `xml:"value,attr"` // (required|notRequired|optional) REQUIRED
+	XMLName           xml.Name `xml:"SESInstruction"`
+	Value             string   `xml:"value,attr"` // (required|notRequired|optional) REQUIRED
+	UnitPriceEditable string   `xml:"unitPriceEditable,attr,omitempty"`
+	Lower             *Lower   `xml:"Lower,omitempty"`
+	Upper             *Upper   `xml:"Upper,omitempty"`
 }
 
 // ─── Packaging ────────────────────────────────────────────────────────────────
@@ -133,11 +143,23 @@ type Packaging struct {
 	ShippingContainerSerialCode          *ShippingContainerSerialCode          `xml:"ShippingContainerSerialCode,omitempty"`
 	ShippingContainerSerialCodeReference *ShippingContainerSerialCodeReference `xml:"ShippingContainerSerialCodeReference,omitempty"`
 	AssetInfo                            []*AssetInfo                          `xml:"AssetInfo,omitempty"`
+	BestBeforeDate                       *BestBeforeDate                       `xml:"BestBeforeDate,omitempty"`
+	DispatchQuantity                     *DispatchQuantity                     `xml:"DispatchQuantity,omitempty"`
+	Extrinsic                            []*Extrinsic                          `xml:"Extrinsic,omitempty"`
+	FreeGoodsQuantity                    *FreeGoodsQuantity                    `xml:"FreeGoodsQuantity,omitempty"`
+	OrderedQuantity                      *OrderedQuantity                      `xml:"OrderedQuantity,omitempty"`
+	PackageID                            *PackageID                            `xml:"PackageID,omitempty"`
+	PackageTypeCodeIdentifierCode        *PackageTypeCodeIdentifierCode        `xml:"PackageTypeCodeIdentifierCode,omitempty"`
+	PackagingIndustry                    *PackagingIndustry                    `xml:"PackagingIndustry,omitempty"`
+	QuantityVarianceNote                 *QuantityVarianceNote                 `xml:"QuantityVarianceNote,omitempty"`
+	ShippingMark                         *ShippingMark                         `xml:"ShippingMark,omitempty"`
+	StoreCode                            *StoreCode                            `xml:"StoreCode,omitempty"`
 }
 
 // PackagingCode is a packaging type code.
 type PackagingCode struct {
 	XMLName xml.Name `xml:"PackagingCode"`
+	XMLLang string   `xml:"xml:lang,attr,omitempty"`
 	Value   string   `xml:",chardata"`
 }
 
@@ -156,5 +178,89 @@ type ShippingContainerSerialCode struct {
 // ShippingContainerSerialCodeReference refers to another container.
 type ShippingContainerSerialCodeReference struct {
 	XMLName xml.Name `xml:"ShippingContainerSerialCodeReference"`
+	Value   string   `xml:",chardata"`
+}
+
+// ─── Packaging sub-types ──────────────────────────────────────────────────────
+
+// TemporaryPrice is an EMPTY flag element indicating a temporary price applies.
+type TemporaryPrice struct {
+	XMLName xml.Name `xml:"TemporaryPrice"`
+	Value   string   `xml:"value,attr"` // (yes|no) REQUIRED
+}
+
+// DispatchQuantity is the quantity dispatched for delivery.
+type DispatchQuantity struct {
+	XMLName       xml.Name       `xml:"DispatchQuantity"`
+	Quantity      string         `xml:"quantity,attr,omitempty"`
+	UnitOfMeasure *UnitOfMeasure `xml:"UnitOfMeasure,omitempty"`
+}
+
+// FreeGoodsQuantity is the quantity delivered at no cost (samples, promotions, etc.).
+type FreeGoodsQuantity struct {
+	XMLName       xml.Name       `xml:"FreeGoodsQuantity"`
+	Quantity      string         `xml:"quantity,attr,omitempty"`
+	UnitOfMeasure *UnitOfMeasure `xml:"UnitOfMeasure,omitempty"`
+}
+
+// PackageID provides identifiers for an individual package.
+type PackageID struct {
+	XMLName                 xml.Name                 `xml:"PackageID"`
+	GlobalIndividualAssetID *GlobalIndividualAssetID `xml:"GlobalIndividualAssetID,omitempty"`
+	ReturnablePackageID     *ReturnablePackageID     `xml:"ReturnablePackageID,omitempty"`
+	PackageTrackingID       *PackageTrackingID       `xml:"PackageTrackingID,omitempty"`
+}
+
+// GlobalIndividualAssetID is a global unique asset identifier.
+type GlobalIndividualAssetID struct {
+	XMLName xml.Name `xml:"GlobalIndividualAssetID"`
+	Value   string   `xml:",chardata"`
+}
+
+// ReturnablePackageID identifies a returnable/deposit package.
+type ReturnablePackageID struct {
+	XMLName xml.Name `xml:"ReturnablePackageID"`
+	Value   string   `xml:",chardata"`
+}
+
+// PackageTrackingID is the carrier tracking ID for a package.
+type PackageTrackingID struct {
+	XMLName xml.Name `xml:"PackageTrackingID"`
+	Value   string   `xml:",chardata"`
+}
+
+// PackageTypeCodeIdentifierCode identifies the package type code scheme.
+type PackageTypeCodeIdentifierCode struct {
+	XMLName xml.Name `xml:"PackageTypeCodeIdentifierCode"`
+	Value   string   `xml:",chardata"`
+}
+
+// PackagingIndustry groups industry-specific packaging extensions.
+type PackagingIndustry struct {
+	XMLName               xml.Name               `xml:"PackagingIndustry"`
+	PackagingLifeSciences *PackagingLifeSciences `xml:"PackagingLifeSciences,omitempty"`
+}
+
+// PackagingLifeSciences holds life-sciences-specific packaging data.
+type PackagingLifeSciences struct {
+	XMLName            xml.Name              `xml:"PackagingLifeSciences"`
+	MedicationListInfo []*MedicationListInfo `xml:"MedicationListInfo,omitempty"`
+}
+
+// QuantityVarianceNote is a note explaining a quantity variance (partial delivery).
+type QuantityVarianceNote struct {
+	XMLName xml.Name `xml:"QuantityVarianceNote"`
+	Value   string   `xml:",chardata"`
+}
+
+// ShippingMark is a mark/label on the shipping package.
+type ShippingMark struct {
+	XMLName xml.Name `xml:"ShippingMark"`
+	Value   string   `xml:",chardata"`
+}
+
+// StoreCode identifies the destination store for retail deliveries.
+type StoreCode struct {
+	XMLName xml.Name `xml:"StoreCode"`
 	Value   string   `xml:",chardata"`
 }

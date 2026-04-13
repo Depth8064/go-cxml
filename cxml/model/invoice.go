@@ -43,23 +43,19 @@ type InvoiceDetailRequestHeader struct {
 type InvoiceDetailHeaderIndicator struct {
 	XMLName                         xml.Name `xml:"InvoiceDetailHeaderIndicator"`
 	IsHeaderInvoice                 string   `xml:"isHeaderInvoice,attr,omitempty"`
-	IsLineItemTotalForHeaderInvoice string   `xml:"isLineItemTotalForHeaderInvoice,attr,omitempty"` // (yes)
-	IsDiscountInLine                string   `xml:"isDiscountInLine,attr,omitempty"`                // (yes)
-	IsSpecialHandlingInLine         string   `xml:"isSpecialHandlingInLine,attr,omitempty"`         // (yes)
-	IsShippingInLine                string   `xml:"isShippingInLine,attr,omitempty"`                // (yes)
-	IsTaxInLine                     string   `xml:"isTaxInLine,attr,omitempty"`                     // (yes)
-	IsAccountingInLine              string   `xml:"isAccountingInLine,attr,omitempty"`              // (yes)
-	IsPriceInLine                   string   `xml:"isPriceInLine,attr,omitempty"`                   // (yes)
+	IsPriceBasedLineLevelCreditMemo string   `xml:"isPriceBasedLineLevelCreditMemo,attr,omitempty"`
+	IsVatRecoverable                string   `xml:"isVatRecoverable,attr,omitempty"`
 }
 
-// InvoiceDetailLineIndicator carries header-level flags about line details.
+// InvoiceDetailLineIndicator carries flags about which details are embedded in line items.
 type InvoiceDetailLineIndicator struct {
 	XMLName                 xml.Name `xml:"InvoiceDetailLineIndicator"`
-	IsDiscountInLine        string   `xml:"isDiscountInLine,attr,omitempty"`        // (yes)
+	IsTaxInLine             string   `xml:"isTaxInLine,attr,omitempty"`             // (yes)
 	IsSpecialHandlingInLine string   `xml:"isSpecialHandlingInLine,attr,omitempty"` // (yes)
 	IsShippingInLine        string   `xml:"isShippingInLine,attr,omitempty"`        // (yes)
-	IsTaxInLine             string   `xml:"isTaxInLine,attr,omitempty"`             // (yes)
+	IsDiscountInLine        string   `xml:"isDiscountInLine,attr,omitempty"`        // (yes)
 	IsAccountingInLine      string   `xml:"isAccountingInLine,attr,omitempty"`      // (yes)
+	IsPriceAdjustmentInLine string   `xml:"isPriceAdjustmentInLine,attr,omitempty"` // (yes)
 }
 
 // InvoicePartner identifies a party involved in the invoice (e.g. from, to, remitTo).
@@ -78,9 +74,8 @@ type InvoiceIDInfo struct {
 
 // PaymentProposalIDInfo references a PaymentProposalRequest.
 type PaymentProposalIDInfo struct {
-	XMLName             xml.Name `xml:"PaymentProposalIDInfo"`
-	PaymentProposalID   string   `xml:"paymentProposalID,attr,omitempty"`
-	PaymentProposalDate string   `xml:"paymentProposalDate,attr,omitempty"`
+	XMLName           xml.Name `xml:"PaymentProposalIDInfo"`
+	PaymentProposalID string   `xml:"paymentProposalID,attr,omitempty"`
 }
 
 // InvoiceDetailShipping contains shipping details within an invoice.
@@ -138,9 +133,10 @@ type InvoiceDetailOrderInfo struct {
 
 // OrderIDInfo is the buyer-system order identifier (used when OrderReference is not available).
 type OrderIDInfo struct {
-	XMLName   xml.Name `xml:"OrderIDInfo"`
-	OrderID   string   `xml:"orderID,attr,omitempty"`
-	OrderDate string   `xml:"orderDate,attr,omitempty"`
+	XMLName     xml.Name       `xml:"OrderIDInfo"`
+	OrderID     string         `xml:"orderID,attr,omitempty"`
+	OrderDate   string         `xml:"orderDate,attr,omitempty"`
+	IdReference []*IdReference `xml:"IdReference,omitempty"`
 }
 
 // InvoiceDetailReceiptInfo cross-references a buyer receipt document.
@@ -160,9 +156,10 @@ type ReceiptReference struct {
 
 // ReceiptIDInfo identifies a receipt by the buyer's system ID.
 type ReceiptIDInfo struct {
-	XMLName     xml.Name `xml:"ReceiptIDInfo"`
-	ReceiptID   string   `xml:"receiptID,attr,omitempty"`
-	ReceiptDate string   `xml:"receiptDate,attr,omitempty"`
+	XMLName     xml.Name       `xml:"ReceiptIDInfo"`
+	ReceiptID   string         `xml:"receiptID,attr,omitempty"`
+	ReceiptDate string         `xml:"receiptDate,attr,omitempty"`
+	IdReference []*IdReference `xml:"IdReference,omitempty"`
 }
 
 // InvoiceDetailShipNoticeInfo cross-references a ship notice document.
@@ -206,6 +203,11 @@ type InvoiceDetailItem struct {
 	NetAmount                        *NetAmount                        `xml:"NetAmount,omitempty"`
 	Distribution                     []*Distribution                   `xml:"Distribution,omitempty"`
 	Packaging                        []*Packaging                      `xml:"Packaging,omitempty"`
+	ServiceEntryItemReference        *ServiceEntryItemReference        `xml:"ServiceEntryItemReference,omitempty"`
+	ServiceEntryItemIDInfo           *ServiceEntryItemIDInfo           `xml:"ServiceEntryItemIDInfo,omitempty"`
+	ProductMovementItemIDInfo        *ProductMovementItemIDInfo        `xml:"ProductMovementItemIDInfo,omitempty"`
+	InvoiceDetailItemIndustry        *InvoiceDetailItemIndustry        `xml:"InvoiceDetailItemIndustry,omitempty"`
+	CustomsInfo                      *CustomsInfo                      `xml:"CustomsInfo,omitempty"`
 	Comments                         *Comments                         `xml:"Comments,omitempty"`
 	Extrinsic                        []*Extrinsic                      `xml:"Extrinsic,omitempty"`
 }
@@ -234,23 +236,29 @@ type InvoiceDetailServiceItem struct {
 	TotalAmountWithoutTax             *TotalAmountWithoutTax             `xml:"TotalAmountWithoutTax,omitempty"`
 	NetAmount                         *NetAmount                         `xml:"NetAmount,omitempty"`
 	Distribution                      []*Distribution                    `xml:"Distribution,omitempty"`
+	ServiceEntryItemReference         *ServiceEntryItemReference         `xml:"ServiceEntryItemReference,omitempty"`
+	ServiceEntryItemIDInfo            *ServiceEntryItemIDInfo            `xml:"ServiceEntryItemIDInfo,omitempty"`
+	UnitRate                          *UnitRate                          `xml:"UnitRate,omitempty"`
+	PriceBasisQuantity                *PriceBasisQuantity                `xml:"PriceBasisQuantity,omitempty"`
+	InvoiceLaborDetail                *InvoiceLaborDetail                `xml:"InvoiceLaborDetail,omitempty"`
 	Comments                          *Comments                          `xml:"Comments,omitempty"`
 	Extrinsic                         []*Extrinsic                       `xml:"Extrinsic,omitempty"`
 }
 
 // InvoiceDetailItemReference identifies the PO line being invoiced.
 type InvoiceDetailItemReference struct {
-	XMLName            xml.Name            `xml:"InvoiceDetailItemReference"`
-	LineNumber         string              `xml:"lineNumber,attr"`             // REQUIRED
-	SerialNumber       string              `xml:"serialNumber,attr,omitempty"` // DEPRECATED
-	ItemID             *ItemID             `xml:"ItemID,omitempty"`
-	Description        *Description        `xml:"Description,omitempty"`
-	Classification     []*Classification   `xml:"Classification,omitempty"`
-	ManufacturerPartID *ManufacturerPartID `xml:"ManufacturerPartID,omitempty"`
-	ManufacturerName   *ManufacturerName   `xml:"ManufacturerName,omitempty"`
-	Country            *Country            `xml:"Country,omitempty"`
-	SerialNumbers      []*SerialNumber     `xml:"SerialNumber,omitempty"`
-	SupplierBatchID    *SupplierBatchID    `xml:"SupplierBatchID,omitempty"`
+	XMLName                            xml.Name                            `xml:"InvoiceDetailItemReference"`
+	LineNumber                         string                              `xml:"lineNumber,attr"`             // REQUIRED
+	SerialNumber                       string                              `xml:"serialNumber,attr,omitempty"` // DEPRECATED
+	ItemID                             *ItemID                             `xml:"ItemID,omitempty"`
+	Description                        *Description                        `xml:"Description,omitempty"`
+	Classification                     []*Classification                   `xml:"Classification,omitempty"`
+	ManufacturerPartID                 *ManufacturerPartID                 `xml:"ManufacturerPartID,omitempty"`
+	ManufacturerName                   *ManufacturerName                   `xml:"ManufacturerName,omitempty"`
+	Country                            *Country                            `xml:"Country,omitempty"`
+	SerialNumbers                      []*SerialNumber                     `xml:"SerialNumber,omitempty"`
+	SupplierBatchID                    *SupplierBatchID                    `xml:"SupplierBatchID,omitempty"`
+	InvoiceDetailItemReferenceIndustry *InvoiceDetailItemReferenceIndustry `xml:"InvoiceDetailItemReferenceIndustry,omitempty"`
 }
 
 // InvoiceDetailServiceItemReference identifies the master agreement line being invoiced.
@@ -386,18 +394,22 @@ type InvoiceDetailSummary struct {
 	NetAmount                                 *NetAmount                                 `xml:"NetAmount"`
 	DepositAmount                             *DepositAmount                             `xml:"DepositAmount,omitempty"`
 	DueAmount                                 *DueAmount                                 `xml:"DueAmount,omitempty"`
+	InvoiceDetailSummaryIndustry              *InvoiceDetailSummaryIndustry              `xml:"InvoiceDetailSummaryIndustry,omitempty"`
 }
 
 // SpecialHandlingAmount is a special handling surcharge.
 type SpecialHandlingAmount struct {
-	XMLName xml.Name `xml:"SpecialHandlingAmount"`
-	Money   *Money   `xml:"Money"`
+	XMLName      xml.Name        `xml:"SpecialHandlingAmount"`
+	Description  *Description    `xml:"Description,omitempty"`
+	Money        *Money          `xml:"Money"`
+	Distribution []*Distribution `xml:"Distribution,omitempty"`
 }
 
 // ShippingAmount is the total shipping charge on an invoice.
 type ShippingAmount struct {
-	XMLName xml.Name `xml:"ShippingAmount"`
-	Money   *Money   `xml:"Money"`
+	XMLName      xml.Name        `xml:"ShippingAmount"`
+	Money        *Money          `xml:"Money"`
+	Distribution []*Distribution `xml:"Distribution,omitempty"`
 }
 
 // DepositAmount is the prepayment/deposit deducted from the total due.
@@ -410,4 +422,120 @@ type DepositAmount struct {
 type DueAmount struct {
 	XMLName xml.Name `xml:"DueAmount"`
 	Money   *Money   `xml:"Money"`
+}
+
+// ─── Service entry / labor types ──────────────────────────────────────────────
+
+// ServiceEntryItemReference cross-references a service entry document line.
+type ServiceEntryItemReference struct {
+	XMLName           xml.Name           `xml:"ServiceEntryItemReference"`
+	ServiceLineNumber string             `xml:"serviceLineNumber,attr"`
+	ServiceEntryID    string             `xml:"serviceEntryID,attr,omitempty"`
+	ServiceEntryDate  string             `xml:"serviceEntryDate,attr,omitempty"`
+	DocumentReference *DocumentReference `xml:"DocumentReference"`
+}
+
+// ServiceEntryItemIDInfo references a line in a prior ServiceEntryRequest by ID.
+type ServiceEntryItemIDInfo struct {
+	XMLName           xml.Name       `xml:"ServiceEntryItemIDInfo"`
+	ServiceLineNumber string         `xml:"serviceLineNumber,attr"`
+	ServiceEntryID    string         `xml:"serviceEntryID,attr"`
+	ServiceEntryDate  string         `xml:"serviceEntryDate,attr,omitempty"`
+	IdReference       []*IdReference `xml:"IdReference,omitempty"`
+}
+
+// ProductMovementItemIDInfo references a product movement document line.
+type ProductMovementItemIDInfo struct {
+	XMLName            xml.Name       `xml:"ProductMovementItemIDInfo"`
+	MovementLineNumber string         `xml:"movementLineNumber,attr"`
+	MovementID         string         `xml:"movementID,attr"`
+	MovementDate       string         `xml:"movementDate,attr"`
+	IdReference        []*IdReference `xml:"IdReference,omitempty"`
+}
+
+// InvoiceDetailItemIndustry groups industry-specific invoice item extensions.
+type InvoiceDetailItemIndustry struct {
+	XMLName                 xml.Name                 `xml:"InvoiceDetailItemIndustry"`
+	InvoiceDetailItemRetail *InvoiceDetailItemRetail `xml:"InvoiceDetailItemRetail,omitempty"`
+}
+
+// CustomsInfo holds customs document references for an invoice line.
+type CustomsInfo struct {
+	XMLName      xml.Name      `xml:"CustomsInfo"`
+	Issuer       *Issuer       `xml:"Issuer"`
+	DocumentInfo *DocumentInfo `xml:"DocumentInfo"`
+}
+
+// InvoiceLaborDetail provides labor-related details for a service invoice line.
+type InvoiceLaborDetail struct {
+	XMLName               xml.Name               `xml:"InvoiceLaborDetail"`
+	Contractor            *Contractor            `xml:"Contractor,omitempty"`
+	JobDescription        *JobDescription        `xml:"JobDescription,omitempty"`
+	Supervisor            *Supervisor            `xml:"Supervisor,omitempty"`
+	WorkLocation          *WorkLocation          `xml:"WorkLocation,omitempty"`
+	InvoiceTimeCardDetail *InvoiceTimeCardDetail `xml:"InvoiceTimeCardDetail,omitempty"`
+}
+
+// Contractor identifies the contracting party for a service.
+type Contractor struct {
+	XMLName              xml.Name              `xml:"Contractor"`
+	ContractorIdentifier *ContractorIdentifier `xml:"ContractorIdentifier"`
+	Contact              *Contact              `xml:"Contact"`
+}
+
+// ContractorIdentifier is the identifier string for a contractor.
+type ContractorIdentifier struct {
+	XMLName xml.Name `xml:"ContractorIdentifier"`
+	Domain  string   `xml:"domain,attr"` // (supplierReferenceID|buyerReferenceID) REQUIRED
+	Value   string   `xml:",chardata"`
+}
+
+// JobDescription wraps a textual description of the job performed.
+type JobDescription struct {
+	XMLName     xml.Name     `xml:"JobDescription"`
+	Description *Description `xml:"Description"`
+}
+
+// Supervisor identifies the supervisor of the service work.
+type Supervisor struct {
+	XMLName xml.Name `xml:"Supervisor"`
+	Contact *Contact `xml:"Contact"`
+}
+
+// WorkLocation identifies the physical location where work was performed.
+type WorkLocation struct {
+	XMLName xml.Name `xml:"WorkLocation"`
+	Address *Address `xml:"Address"`
+}
+
+// InvoiceTimeCardDetail references the time card for a service invoice line.
+type InvoiceTimeCardDetail struct {
+	XMLName           xml.Name           `xml:"InvoiceTimeCardDetail"`
+	TimeCardReference *TimeCardReference `xml:"TimeCardReference,omitempty"`
+	TimeCardIDInfo    *TimeCardIDInfo    `xml:"TimeCardIDInfo,omitempty"`
+}
+
+// TimeCardReference points to a prior time card document.
+type TimeCardReference struct {
+	XMLName           xml.Name           `xml:"TimeCardReference"`
+	TimeCardID        string             `xml:"timeCardID,attr,omitempty"`
+	DocumentReference *DocumentReference `xml:"DocumentReference"`
+}
+
+// TimeCardIDInfo identifies a time card by its system ID.
+type TimeCardIDInfo struct {
+	XMLName    xml.Name `xml:"TimeCardIDInfo"`
+	TimeCardID string   `xml:"timeCardID,attr"`
+}
+
+// InvoiceDetailItemReferenceIndustry groups industry-specific item reference extensions.
+type InvoiceDetailItemReferenceIndustry struct {
+	XMLName                          xml.Name                          `xml:"InvoiceDetailItemReferenceIndustry"`
+	InvoiceDetailItemReferenceRetail *InvoiceDetailItemReferenceRetail `xml:"InvoiceDetailItemReferenceRetail,omitempty"`
+}
+
+// InvoiceDetailSummaryIndustry groups industry-specific invoice summary extensions.
+type InvoiceDetailSummaryIndustry struct {
+	XMLName                    xml.Name                    `xml:"InvoiceDetailSummaryIndustry"`
+	InvoiceDetailSummaryRetail *InvoiceDetailSummaryRetail `xml:"InvoiceDetailSummaryRetail,omitempty"`
 }

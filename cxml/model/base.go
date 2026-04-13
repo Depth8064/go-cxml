@@ -181,10 +181,12 @@ type DocumentReference struct {
 	PayloadID string   `xml:"payloadID,attr"` // REQUIRED
 }
 
-// DocumentInfo is an alternate document identifier element.
+// DocumentInfo is an EMPTY element identifying an external document.
 type DocumentInfo struct {
-	XMLName   xml.Name `xml:"DocumentInfo"`
-	PayloadID string   `xml:"payloadID,attr"` // REQUIRED
+	XMLName      xml.Name `xml:"DocumentInfo"`
+	DocumentID   string   `xml:"documentID,attr"`   // REQUIRED
+	DocumentType string   `xml:"documentType,attr"` // REQUIRED
+	DocumentDate string   `xml:"documentDate,attr,omitempty"`
 }
 
 // ─── Units / measures ────────────────────────────────────────────────────────
