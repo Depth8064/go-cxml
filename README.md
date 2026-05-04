@@ -80,13 +80,99 @@ func main() {
 
 ### Processing Pipeline Endpoint
 
-The processing endpoint in `cxml/endpoint` runs this flow:
+The full-pipeline endpoint in `cxml/endpoint` runs:
 
 1. Validate input (DTD)
 2. Deserialize XML into model
-3. Authenticate sender
+3. Authenticate sender credentials
 4. Route payload to registered handler
 5. Serialize response cXML
+
+Use `cxml/endpoint` when receiving inbound cXML. Use `cxml` (the root shim) when you only need serialization.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/Depth8064/go-cxml/cxml/builder"
+	"github.com/Depth8064/go-cxml/cxml/credential"
+	"github.com/Depth8064/go-cxml/cxml/endpoint"
+	"github.com/Depth8064/go-cxml/cxml/handler"
+	"github.com/Depth8064/go-cxml/cxml/model"
+	"github.com/Depth8064/go-cxml/cxml/processor"
+)
+
+type orderHandler struct{}
+
+func (h *orderHandler) Handle(doc *model.CXML) (*model.CXML, error) {
+	// Business logic here.
+	return builder.New().
+		PayloadID(doc.PayloadID + "-resp").
+		Version("1.2.069").
+		Response(&model.Response{Status: &model.Status{Code: "200", Text: "OK"}}).
+		Build(), nil
+}
+
+func main() {
+	reg := handler.NewRegistry()
+	reg.Register("OrderRequest", &orderHandler{})
+
+	proc := processor.NewProcessor(reg)
+
+	creds := credential.NewRegistry([]credential.Entry{
+		{Domain: "NetworkID", Identity: "buyer", SharedSecret: "secret"},
+	})
+
+	ep := endpoint.NewEndpoint(proc, nil, creds)
+
+	// Receive inbound cXML bytes (from HTTP POST body, etc.)
+	var inboundXML []byte // populate from request
+
+	outXML, err := ep.Process(inboundXML)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("response: %s\n", outXML)
+}
+```
+
+### Building Outbound cXML
+
+Use the typed builders in `cxml/builder` to construct outbound documents:
+
+```go
+doc := builder.NewConfirmationRequestBuilder().
+	PayloadID("conf-001").
+	Version("1.2.069").
+	From(&model.Party{Identity: "supplier"}).
+	To(&model.Party{Identity: "buyer"}).
+	Sender(&model.Sender{UserAgent: "my-system"}).
+	Request(&model.ConfirmationRequest{
+		ConfirmationHeader: &model.ConfirmationHeader{
+			ConfirmID: "CONF-001",
+			Operation: "accept",
+		},
+		OrderReference: &model.OrderReference{OrderID: "PO-100"},
+	}).
+	Build()
+```
+
+Available builders:
+
+| Builder | Payload type |
+|---|---|
+| `NewOrderRequestBuilder` | `OrderRequest` |
+| `NewOrderChangeBuilder` | `OrderChangeRequest` |
+| `NewConfirmationRequestBuilder` | `ConfirmationRequest` |
+| `NewPunchOutSetupBuilder` | `PunchOutSetupRequest` |
+| `NewStatusUpdateBuilder` | `StatusUpdateRequest` |
+| `NewProfileRequestBuilder` | `ProfileRequest` |
+| `NewReceivingAdviceBuilder` | `ReceivingAdviceRequest` |
+| `NewShipNoticeBuilder` | `ShipNoticeRequest` |
+| `NewInvoiceDetailBuilder` | `InvoiceDetailRequest` |
 
 ## Build And Test
 
