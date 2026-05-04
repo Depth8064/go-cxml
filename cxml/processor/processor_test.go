@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/handler"
@@ -35,6 +36,19 @@ func (h *stubOrderChangeHandler) Handle(req *model.CXML) (*model.CXML, error) {
 }
 
 func (h *stubOrderChangeHandler) Name() string { return "OrderChangeRequest" }
+
+type namedHandler struct {
+	name string
+}
+
+func (h *namedHandler) Handle(req *model.CXML) (*model.CXML, error) {
+	if req == nil {
+		return nil, errors.New("nil")
+	}
+	return &model.CXML{PayloadID: req.PayloadID, Response: &model.Response{Status: &model.Status{Code: "299", Text: h.name}}}, nil
+}
+
+func (h *namedHandler) Name() string { return h.name }
 
 func TestProcessor_Process_OrderRequest(t *testing.T) {
 	reg := handler.NewRegistry()
@@ -85,4 +99,43 @@ func TestProcessor_Process_NoHandler(t *testing.T) {
 	p := NewProcessor(handler.NewRegistry())
 	_, err := p.Process(&model.CXML{Request: &model.Request{OrderRequest: &model.OrderRequest{}}})
 	assert.Error(t, err)
+}
+
+func TestProcessor_NewProcessor_NilRegistry(t *testing.T) {
+	p := NewProcessor(nil)
+	assert.NotNil(t, p)
+}
+
+func TestProcessor_Process_NilDocument(t *testing.T) {
+	p := NewProcessor(nil)
+	resp, err := p.Process(nil)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+}
+
+func TestProcessor_Process_UnsupportedPayload(t *testing.T) {
+	p := NewProcessor(handler.NewRegistry())
+	resp, err := p.Process(&model.CXML{})
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+}
+
+func TestProcessor_Process_ResponsePayload(t *testing.T) {
+	reg := handler.NewRegistry()
+	reg.Register(&namedHandler{name: "Status"})
+	p := NewProcessor(reg)
+
+	resp, err := p.Process(&model.CXML{PayloadID: "resp1", Response: &model.Response{Status: &model.Status{Code: "200"}}})
+	assert.NoError(t, err)
+	assert.Equal(t, "299", resp.Response.Status.Code)
+}
+
+func TestProcessor_Process_MessagePayload(t *testing.T) {
+	reg := handler.NewRegistry()
+	reg.Register(&namedHandler{name: "Message"})
+	p := NewProcessor(reg)
+
+	resp, err := p.Process(&model.CXML{PayloadID: "msg1", Message: &model.Message{Subject: "hello"}})
+	assert.NoError(t, err)
+	assert.Equal(t, "299", resp.Response.Status.Code)
 }

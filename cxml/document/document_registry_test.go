@@ -22,3 +22,20 @@ func TestInMemoryRegistry_GetUnknown(t *testing.T) {
 	_, ok := reg.Get("missing")
 	assert.False(t, ok)
 }
+
+func TestInMemoryRegistry_SaveInitializesNilStore(t *testing.T) {
+	reg := &InMemoryRegistry{}
+	c := &model.CXML{PayloadID: "x2"}
+	reg.Save("x2", c)
+
+	got, ok := reg.Get("x2")
+	assert.True(t, ok)
+	assert.Equal(t, c, got)
+}
+
+func TestInMemoryRegistry_GetOnNilStore(t *testing.T) {
+	reg := &InMemoryRegistry{}
+	got, ok := reg.Get("missing")
+	assert.False(t, ok)
+	assert.Nil(t, got)
+}

@@ -4,14 +4,30 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"github.com/Depth8064/go-cxml/cxml/model"
+	"io"
 	"strings"
+
+	"github.com/Depth8064/go-cxml/cxml/model"
 )
 
-type Serializer struct{}
+type xmlEncoder interface {
+	Encode(v any) error
+	Flush() error
+	Indent(prefix, indent string)
+}
+
+type Serializer struct {
+	newBuffer  func() *bytes.Buffer
+	newEncoder func(io.Writer) xmlEncoder
+}
 
 func NewSerializer() *Serializer {
-	return &Serializer{}
+	return &Serializer{
+		newBuffer: func() *bytes.Buffer { return &bytes.Buffer{} },
+		newEncoder: func(w io.Writer) xmlEncoder {
+			return xml.NewEncoder(w)
+		},
+	}
 }
 
 func (s *Serializer) Serialize(c *model.CXML) ([]byte, error) {
@@ -19,7 +35,7 @@ func (s *Serializer) Serialize(c *model.CXML) ([]byte, error) {
 		return nil, errors.New("cxml: nil document")
 	}
 
-	buf := &bytes.Buffer{}
+	buf := s.newBuffer()
 	buf.WriteString(xml.Header)
 
 	// Optional DOCTYPE maybe derived from c.Version or DTD not attached yet.
@@ -27,7 +43,7 @@ func (s *Serializer) Serialize(c *model.CXML) ([]byte, error) {
 		buf.WriteString("<!DOCTYPE cXML SYSTEM \"http://xml.cxml.org/schemas/cXML/1.2.014/cXML.dtd\">\n")
 	}
 
-	enc := xml.NewEncoder(buf)
+	enc := s.newEncoder(buf)
 	enc.Indent("", "  ")
 
 	if err := enc.Encode(c); err != nil {

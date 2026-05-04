@@ -1,11 +1,32 @@
 package serializer
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
 	"github.com/stretchr/testify/assert"
 )
+
+type encoderStub struct {
+	encodeErr error
+	flushErr  error
+}
+
+func (e *encoderStub) Encode(v any) error {
+	if e.encodeErr != nil {
+		return e.encodeErr
+	}
+	return nil
+}
+
+func (e *encoderStub) Flush() error {
+	return e.flushErr
+}
+
+func (e *encoderStub) Indent(prefix, indent string) {}
 
 func TestSerializeAndDeserialize(t *testing.T) {
 	doc := &model.CXML{
@@ -169,4 +190,49 @@ func TestSerializeAndDeserialize_ConfirmationRequest(t *testing.T) {
 	assert.Equal(t, "CONF-1", decoded.Request.ConfirmationRequest.ConfirmationHeader.ConfirmID)
 	assert.Equal(t, "PO-123", decoded.Request.ConfirmationRequest.OrderReference.OrderID)
 	assert.Equal(t, "ConfirmationRequest", decoded.Request.PayloadType())
+}
+
+func TestSerializeNilDocument(t *testing.T) {
+	s := NewSerializer()
+	out, err := s.Serialize(nil)
+	assert.Error(t, err)
+	assert.Nil(t, out)
+}
+
+func TestDeserializeEmptyInput(t *testing.T) {
+	s := NewSerializer()
+	doc, err := s.Deserialize(nil)
+	assert.Error(t, err)
+	assert.Nil(t, doc)
+}
+
+func TestDeserializeInvalidXML(t *testing.T) {
+	s := NewSerializer()
+	doc, err := s.Deserialize([]byte(`<cXML><Request></cXML>`))
+	assert.Error(t, err)
+	assert.Nil(t, doc)
+}
+
+func TestSerialize_EncodeError(t *testing.T) {
+	s := NewSerializer()
+	s.newBuffer = func() *bytes.Buffer { return &bytes.Buffer{} }
+	s.newEncoder = func(w io.Writer) xmlEncoder {
+		return &encoderStub{encodeErr: errors.New("encode failed")}
+	}
+
+	out, err := s.Serialize(&model.CXML{PayloadID: "x"})
+	assert.EqualError(t, err, "encode failed")
+	assert.Nil(t, out)
+}
+
+func TestSerialize_FlushError(t *testing.T) {
+	s := NewSerializer()
+	s.newBuffer = func() *bytes.Buffer { return &bytes.Buffer{} }
+	s.newEncoder = func(w io.Writer) xmlEncoder {
+		return &encoderStub{flushErr: errors.New("flush failed")}
+	}
+
+	out, err := s.Serialize(&model.CXML{PayloadID: "x"})
+	assert.EqualError(t, err, "flush failed")
+	assert.Nil(t, out)
 }
