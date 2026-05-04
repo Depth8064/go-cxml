@@ -199,11 +199,28 @@ func TestResponse_PayloadType_AllBranches(t *testing.T) {
 }
 
 func TestRequestPayloadName_Implementations(t *testing.T) {
-	if got, want := (&PunchOutOrderMessage{}).RequestPayloadName(), "PunchOutOrderMessage"; got != want {
-		t.Fatalf("unexpected payload name: got %q want %q", got, want)
+	tests := []struct {
+		name    string
+		payload RequestPayload
+		want    string
+	}{
+		{"PunchOutOrderMessage", &PunchOutOrderMessage{}, "PunchOutOrderMessage"},
+		{"OrderRequest", &OrderRequest{}, "OrderRequest"},
+		{"OrderChangeRequest", &OrderChangeRequest{}, "OrderChangeRequest"},
+		{"ConfirmationRequest", &ConfirmationRequest{}, "ConfirmationRequest"},
+		{"ProfileRequest", &ProfileRequest{}, "ProfileRequest"},
+		{"StatusUpdateRequest", &StatusUpdateRequest{}, "StatusUpdateRequest"},
+		{"PunchOutSetupRequest", &PunchOutSetupRequest{}, "PunchOutSetupRequest"},
+		{"ReceivingAdviceRequest", &ReceivingAdviceRequest{}, "ReceivingAdviceRequest"},
+		{"ShipNoticeRequest", &ShipNoticeRequest{}, "ShipNoticeRequest"},
+		{"InvoiceDetailRequest", &InvoiceDetailRequest{}, "InvoiceDetailRequest"},
 	}
-	if got, want := (&OrderRequest{}).RequestPayloadName(), "OrderRequest"; got != want {
-		t.Fatalf("unexpected payload name: got %q want %q", got, want)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.payload.RequestPayloadName(); got != tt.want {
+				t.Fatalf("unexpected payload name: got %q want %q", got, tt.want)
+			}
+		})
 	}
 }
 

@@ -181,3 +181,123 @@ func TestInvoiceDetailBuilder(t *testing.T) {
 		t.Fatalf("unexpected version: got %q want %q", got, want)
 	}
 }
+
+func TestConfirmationRequestBuilder(t *testing.T) {
+	cr := &model.ConfirmationRequest{
+		ConfirmationHeader: &model.ConfirmationHeader{ConfirmID: "CONF-001", Operation: "accept"},
+	}
+	doc := NewConfirmationRequestBuilder().
+		PayloadID("p6").
+		Timestamp("2026-04-01T00:00:00").
+		Version("1.2.069").
+		From(&model.Party{Identity: "From"}).
+		To(&model.Party{Identity: "To"}).
+		Sender(&model.Sender{UserAgent: "go-cxml-test"}).
+		Request(cr).
+		Build()
+
+	if doc == nil || doc.Request == nil || doc.Request.ConfirmationRequest == nil {
+		t.Fatal("expected built confirmation request")
+	}
+	if got, want := doc.Request.ConfirmationRequest.ConfirmationHeader.ConfirmID, "CONF-001"; got != want {
+		t.Fatalf("unexpected confirm id: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "ConfirmationRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+}
+
+func TestPunchOutSetupBuilder(t *testing.T) {
+	req := &model.PunchOutSetupRequest{
+		Operation:   "create",
+		BuyerCookie: "cookie-abc",
+	}
+	doc := NewPunchOutSetupBuilder().
+		PayloadID("p7").
+		Timestamp("2026-04-01T00:00:00").
+		Version("1.2.069").
+		From(&model.Party{Identity: "From"}).
+		To(&model.Party{Identity: "To"}).
+		Sender(&model.Sender{UserAgent: "go-cxml-test"}).
+		Request(req).
+		Build()
+
+	if doc == nil || doc.Request == nil || doc.Request.PunchOutSetupRequest == nil {
+		t.Fatal("expected built punchout setup request")
+	}
+	if got, want := doc.Request.PunchOutSetupRequest.BuyerCookie, "cookie-abc"; got != want {
+		t.Fatalf("unexpected buyer cookie: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "PunchOutSetupRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+}
+
+func TestStatusUpdateBuilder(t *testing.T) {
+	req := &model.StatusUpdateRequest{
+		Status: &model.Status{Code: "200", Text: "OK"},
+	}
+	doc := NewStatusUpdateBuilder().
+		PayloadID("p8").
+		Timestamp("2026-04-01T00:00:00").
+		Version("1.2.069").
+		From(&model.Party{Identity: "From"}).
+		To(&model.Party{Identity: "To"}).
+		Sender(&model.Sender{UserAgent: "go-cxml-test"}).
+		Request(req).
+		Build()
+
+	if doc == nil || doc.Request == nil || doc.Request.StatusUpdateRequest == nil {
+		t.Fatal("expected built status update request")
+	}
+	if got, want := doc.Request.StatusUpdateRequest.Status.Code, "200"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "StatusUpdateRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+}
+
+func TestProfileRequestBuilder(t *testing.T) {
+	doc := NewProfileRequestBuilder().
+		PayloadID("p9").
+		Timestamp("2026-04-01T00:00:00").
+		Version("1.2.069").
+		From(&model.Party{Identity: "From"}).
+		To(&model.Party{Identity: "To"}).
+		Sender(&model.Sender{UserAgent: "go-cxml-test"}).
+		Request(&model.ProfileRequest{}).
+		Build()
+
+	if doc == nil || doc.Request == nil || doc.Request.ProfileRequest == nil {
+		t.Fatal("expected built profile request")
+	}
+	if got, want := doc.Request.PayloadType(), "ProfileRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+}
+
+func TestReceivingAdviceBuilder(t *testing.T) {
+	req := &model.ReceivingAdviceRequest{
+		Header: &model.ReceivingAdviceHeader{ID: "RA-001"},
+	}
+	doc := NewReceivingAdviceBuilder().
+		PayloadID("p10").
+		Timestamp("2026-04-01T00:00:00").
+		Version("1.2.069").
+		From(&model.Party{Identity: "From"}).
+		To(&model.Party{Identity: "To"}).
+		Sender(&model.Sender{UserAgent: "go-cxml-test"}).
+		Request(req).
+		Build()
+
+	if doc == nil || doc.Request == nil || doc.Request.ReceivingAdviceRequest == nil {
+		t.Fatal("expected built receiving advice request")
+	}
+	if got, want := doc.Request.ReceivingAdviceRequest.Header.ID, "RA-001"; got != want {
+		t.Fatalf("unexpected receiving advice id: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "ReceivingAdviceRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+}
