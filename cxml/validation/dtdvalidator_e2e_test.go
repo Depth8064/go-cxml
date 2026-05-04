@@ -2,14 +2,12 @@ package validation
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
 func TestDTDValidator_LocalDTDSucceeds(t *testing.T) {
 	// Local-only DTD check, enabled by env var
-	dtdDir := filepath.Join("..", "..", "dev", "cXML")
-	os.Setenv("CXML_DTD_DIR", dtdDir)
+	os.Setenv("CXML_DTD_DIR", "testdata")
 	defer os.Unsetenv("CXML_DTD_DIR")
 
 	xml := []byte(`<?xml version="1.0" encoding="UTF-8"?>
