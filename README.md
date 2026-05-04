@@ -1,5 +1,11 @@
 # go-cxml
 
+[![CI](https://github.com/Depth8064/go-cxml/actions/workflows/ci.yml/badge.svg)](https://github.com/Depth8064/go-cxml/actions/workflows/ci.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/Depth8064/go-cxml)](go.mod)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Depth8064/go-cxml)](https://goreportcard.com/report/github.com/Depth8064/go-cxml)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/Depth8064/go-cxml.svg)](https://pkg.go.dev/github.com/Depth8064/go-cxml)
+[![License](https://img.shields.io/github/license/Depth8064/go-cxml)](LICENSE)
+
 Pure Go implementation of cXML (Commerce XML) with zero external runtime dependencies.
 
 ## Highlights
