@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRegistry_Count(t *testing.T) {
 	r := NewRegistry([]*model.Credential{{Domain: "d", Identity: "i", SharedSecret: "s"}, nil})
-	assert.Equal(t, 2, r.Count())
+	if got, want := r.Count(), 2; got != want {
+		t.Fatalf("unexpected count: got %d want %d", got, want)
+	}
 }
 
 func TestRegistry_FindAndValidate(t *testing.T) {
@@ -17,14 +18,28 @@ func TestRegistry_FindAndValidate(t *testing.T) {
 	r := NewRegistry([]*model.Credential{nil, match})
 
 	found, ok := r.Find("d", "i", "s")
-	assert.True(t, ok)
-	assert.Equal(t, match, found)
+	if !ok {
+		t.Fatal("expected credential to be found")
+	}
+	if found != match {
+		t.Fatal("expected found credential pointer to match")
+	}
 
-	assert.True(t, r.Validate(&model.Credential{Domain: "d", Identity: "i", SharedSecret: "s"}))
-	assert.False(t, r.Validate(&model.Credential{Domain: "d", Identity: "x", SharedSecret: "s"}))
-	assert.False(t, r.Validate(nil))
+	if !r.Validate(&model.Credential{Domain: "d", Identity: "i", SharedSecret: "s"}) {
+		t.Fatal("expected credential to validate")
+	}
+	if r.Validate(&model.Credential{Domain: "d", Identity: "x", SharedSecret: "s"}) {
+		t.Fatal("expected credential to fail validation")
+	}
+	if r.Validate(nil) {
+		t.Fatal("expected nil credential to fail validation")
+	}
 
 	missing, ok := r.Find("x", "i", "s")
-	assert.False(t, ok)
-	assert.Nil(t, missing)
+	if ok {
+		t.Fatal("did not expect credential match")
+	}
+	if missing != nil {
+		t.Fatal("expected missing credential to be nil")
+	}
 }

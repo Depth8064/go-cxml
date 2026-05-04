@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 type handlerStub struct {
@@ -24,16 +23,24 @@ func TestRegistry_RegisterAndGet(t *testing.T) {
 	r.Register(h)
 
 	got, ok := r.Get("OrderRequest")
-	assert.True(t, ok)
-	assert.Equal(t, h, got)
+	if !ok {
+		t.Fatal("expected registered handler to exist")
+	}
+	if got != h {
+		t.Fatal("expected returned handler to match registered handler")
+	}
 
 	_, ok = r.Get("Missing")
-	assert.False(t, ok)
+	if ok {
+		t.Fatal("did not expect missing handler to be found")
+	}
 }
 
 func TestRegistry_RegisterNil(t *testing.T) {
 	r := NewRegistry()
 	r.Register(nil)
 	_, ok := r.Get("anything")
-	assert.False(t, ok)
+	if ok {
+		t.Fatal("did not expect nil registration to add handler")
+	}
 }

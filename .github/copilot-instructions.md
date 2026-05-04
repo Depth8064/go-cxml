@@ -34,7 +34,7 @@ Input XML → Serializer (deserialize) → Authenticator → Processor (route to
 - **No global state**: Dependencies are passed explicitly
 - **Nil-safe**: Check `nil` before use throughout
 - **Error handling**: Return `error`, never panic in core logic
-- **Testing**: Use `testify` for assertions; stub handlers implement `Handler` interface
+- **Testing**: Use Go's `testing` package assertions; stub handlers implement `Handler` interface
 - **XML tags**: Attributes use `xml:"name,attr"`, elements use `xml:"Name"`
 
 ## Consumer

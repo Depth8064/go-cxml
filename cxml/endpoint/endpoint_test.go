@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/auth"
@@ -10,7 +11,6 @@ import (
 	"github.com/Depth8064/go-cxml/cxml/model"
 	"github.com/Depth8064/go-cxml/cxml/processor"
 	"github.com/Depth8064/go-cxml/cxml/validation"
-	"github.com/stretchr/testify/assert"
 )
 
 type basicOrderHandler struct{}
@@ -51,9 +51,15 @@ func TestEndpoint_Process_Success(t *testing.T) {
 </cXML>`)
 
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "200")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "200") {
+		t.Fatal("expected 200 status in output")
+	}
 }
 
 func TestEndpoint_Process_AuthFail(t *testing.T) {
@@ -85,9 +91,15 @@ func TestEndpoint_Process_AuthFail(t *testing.T) {
 </cXML>`)
 
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "401")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "401") {
+		t.Fatal("expected 401 status in output")
+	}
 }
 
 func TestEndpoint_Process_DTDFail(t *testing.T) {
@@ -104,20 +116,34 @@ func TestEndpoint_Process_DTDFail(t *testing.T) {
 <cXML payloadID="abc"></cXML>`)
 
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "400")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "400") {
+		t.Fatal("expected 400 status in output")
+	}
 }
 
 func TestEndpoint_NewEndpoint_Defaults(t *testing.T) {
 	ep := NewEndpoint(nil, nil, nil)
-	assert.NotNil(t, ep)
+	if ep == nil {
+		t.Fatal("expected endpoint instance")
+	}
 
 	input := []byte(`<?xml version="1.0"?><cXML payloadID="abc"></cXML>`)
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "400")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "400") {
+		t.Fatal("expected 400 status in output")
+	}
 }
 
 func TestEndpoint_SettersAndDeserializeFailurePath(t *testing.T) {
@@ -131,9 +157,15 @@ func TestEndpoint_SettersAndDeserializeFailurePath(t *testing.T) {
 	ep.SetCredentialRepository(credential.NewRegistry(nil))
 
 	output, err := ep.Process([]byte("not-xml"))
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "400")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "400") {
+		t.Fatal("expected 400 status in output")
+	}
 }
 
 func TestEndpoint_SetDTDValidatorWithInstance(t *testing.T) {
@@ -142,8 +174,12 @@ func TestEndpoint_SetDTDValidatorWithInstance(t *testing.T) {
 
 	input := []byte(`<?xml version="1.0"?><cXML payloadID="abc"></cXML>`)
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "400")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "400") {
+		t.Fatal("expected 400 status in output")
+	}
 }
 
 func TestEndpoint_Process_ProcessorFailureReturns500(t *testing.T) {
@@ -160,7 +196,13 @@ func TestEndpoint_Process_ProcessorFailureReturns500(t *testing.T) {
 </cXML>`)
 
 	output, err := ep.Process(input)
-	assert.NoError(t, err)
-	assert.Contains(t, string(output), "<Response>")
-	assert.Contains(t, string(output), "500")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(output), "<Response>") {
+		t.Fatal("expected response payload in output")
+	}
+	if !strings.Contains(string(output), "500") {
+		t.Fatal("expected 500 status in output")
+	}
 }

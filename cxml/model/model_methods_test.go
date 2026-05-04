@@ -4,39 +4,57 @@ import (
 	"encoding/xml"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMoney_UnmarshalXML(t *testing.T) {
 	t.Run("parses and trims value", func(t *testing.T) {
 		var m Money
 		err := xml.Unmarshal([]byte(`<Money currency="USD"> 123.45 </Money>`), &m)
-		assert.NoError(t, err)
-		assert.Equal(t, "USD", m.Currency)
-		assert.Equal(t, "123.45", m.Value)
-		assert.Equal(t, 123.45, m.Amount)
+		if err != nil {
+			t.Fatalf("unmarshal failed: %v", err)
+		}
+		if got, want := m.Currency, "USD"; got != want {
+			t.Fatalf("unexpected currency: got %q want %q", got, want)
+		}
+		if got, want := m.Value, "123.45"; got != want {
+			t.Fatalf("unexpected value: got %q want %q", got, want)
+		}
+		if got, want := m.Amount, 123.45; got != want {
+			t.Fatalf("unexpected amount: got %v want %v", got, want)
+		}
 	})
 
 	t.Run("keeps zero amount on non-numeric value", func(t *testing.T) {
 		var m Money
 		err := xml.Unmarshal([]byte(`<Money currency="USD">abc</Money>`), &m)
-		assert.NoError(t, err)
-		assert.Equal(t, "abc", m.Value)
-		assert.Equal(t, 0.0, m.Amount)
+		if err != nil {
+			t.Fatalf("unmarshal failed: %v", err)
+		}
+		if got, want := m.Value, "abc"; got != want {
+			t.Fatalf("unexpected value: got %q want %q", got, want)
+		}
+		if got, want := m.Amount, 0.0; got != want {
+			t.Fatalf("unexpected amount: got %v want %v", got, want)
+		}
 	})
 
 	t.Run("returns decode error on malformed XML", func(t *testing.T) {
 		decoder := xml.NewDecoder(strings.NewReader(`<Money currency="USD">123`))
 		tok, err := decoder.Token()
-		assert.NoError(t, err)
+		if err != nil {
+			t.Fatalf("unexpected token error: %v", err)
+		}
 
 		start, ok := tok.(xml.StartElement)
-		assert.True(t, ok)
+		if !ok {
+			t.Fatal("expected start element token")
+		}
 
 		var m Money
 		err = m.UnmarshalXML(decoder, start)
-		assert.Error(t, err)
+		if err == nil {
+			t.Fatal("expected decode error")
+		}
 	})
 }
 
@@ -44,58 +62,90 @@ func TestMoney_MarshalXML(t *testing.T) {
 	t.Run("uses explicit value", func(t *testing.T) {
 		m := Money{Currency: "USD", Value: "99.99", Amount: 100}
 		out, err := xml.Marshal(m)
-		assert.NoError(t, err)
-		assert.Contains(t, string(out), `currency="USD"`)
-		assert.Contains(t, string(out), `>99.99<`)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if !strings.Contains(string(out), `currency="USD"`) {
+			t.Fatal("expected USD currency attribute")
+		}
+		if !strings.Contains(string(out), `>99.99<`) {
+			t.Fatal("expected explicit money value")
+		}
 	})
 
 	t.Run("falls back to amount", func(t *testing.T) {
 		m := Money{Currency: "EUR", Amount: 42.5}
 		out, err := xml.Marshal(m)
-		assert.NoError(t, err)
-		assert.Contains(t, string(out), `currency="EUR"`)
-		assert.Contains(t, string(out), `>42.5<`)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		if !strings.Contains(string(out), `currency="EUR"`) {
+			t.Fatal("expected EUR currency attribute")
+		}
+		if !strings.Contains(string(out), `>42.5<`) {
+			t.Fatal("expected fallback money amount")
+		}
 	})
 }
 
 func TestCXML_GetPayloadTypeAndFlags(t *testing.T) {
-	assert.Equal(t, "", (&CXML{}).GetPayloadType())
+	if got, want := (&CXML{}).GetPayloadType(), ""; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
 
 	reqDoc := &CXML{Request: &Request{OrderRequest: &OrderRequest{}}}
-	assert.Equal(t, "OrderRequest", reqDoc.GetPayloadType())
-	assert.True(t, reqDoc.IsRequest())
-	assert.False(t, reqDoc.IsResponse())
-	assert.False(t, reqDoc.IsMessage())
+	if got, want := reqDoc.GetPayloadType(), "OrderRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if !reqDoc.IsRequest() || reqDoc.IsResponse() || reqDoc.IsMessage() {
+		t.Fatal("unexpected request/response/message flags for request doc")
+	}
 
 	respDoc := &CXML{Response: &Response{Status: &Status{Code: "200"}}}
-	assert.Equal(t, "Status", respDoc.GetPayloadType())
-	assert.False(t, respDoc.IsRequest())
-	assert.True(t, respDoc.IsResponse())
-	assert.False(t, respDoc.IsMessage())
+	if got, want := respDoc.GetPayloadType(), "Status"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if respDoc.IsRequest() || !respDoc.IsResponse() || respDoc.IsMessage() {
+		t.Fatal("unexpected request/response/message flags for response doc")
+	}
 
 	msgDoc := &CXML{Message: &Message{Subject: "hello"}}
-	assert.Equal(t, "Message", msgDoc.GetPayloadType())
-	assert.False(t, msgDoc.IsRequest())
-	assert.False(t, msgDoc.IsResponse())
-	assert.True(t, msgDoc.IsMessage())
+	if got, want := msgDoc.GetPayloadType(), "Message"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if msgDoc.IsRequest() || msgDoc.IsResponse() || !msgDoc.IsMessage() {
+		t.Fatal("unexpected request/response/message flags for message doc")
+	}
 }
 
 func TestPrimaryCredential(t *testing.T) {
 	cred := &Credential{Domain: "NetworkID", Identity: "buyer", SharedSecret: "secret"}
 
-	assert.Nil(t, (*From)(nil).PrimaryCredential())
-	assert.Nil(t, (*To)(nil).PrimaryCredential())
-	assert.Nil(t, (*Sender)(nil).PrimaryCredential())
+	if (*From)(nil).PrimaryCredential() != nil || (*To)(nil).PrimaryCredential() != nil || (*Sender)(nil).PrimaryCredential() != nil {
+		t.Fatal("expected nil credentials for nil receivers")
+	}
 
-	assert.Equal(t, cred, (&From{Credential: cred}).PrimaryCredential())
-	assert.Equal(t, cred, (&To{Credential: cred}).PrimaryCredential())
-	assert.Equal(t, cred, (&Sender{Credential: cred}).PrimaryCredential())
+	if (&From{Credential: cred}).PrimaryCredential() != cred {
+		t.Fatal("expected from primary credential")
+	}
+	if (&To{Credential: cred}).PrimaryCredential() != cred {
+		t.Fatal("expected to primary credential")
+	}
+	if (&Sender{Credential: cred}).PrimaryCredential() != cred {
+		t.Fatal("expected sender primary credential")
+	}
 }
 
 func TestMessage_PayloadType(t *testing.T) {
-	assert.Equal(t, "", (*Message)(nil).PayloadType())
-	assert.Equal(t, "Message", (&Message{Subject: "x"}).PayloadType())
-	assert.Equal(t, "Payload", (&Message{Payload: &PayloadWrapper{Content: "<x/>"}}).PayloadType())
+	if got, want := (*Message)(nil).PayloadType(), ""; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if got, want := (&Message{Subject: "x"}).PayloadType(), "Message"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if got, want := (&Message{Payload: &PayloadWrapper{Content: "<x/>"}}).PayloadType(), "Payload"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
 }
 
 func TestRequest_PayloadType_AllBranches(t *testing.T) {
@@ -119,7 +169,9 @@ func TestRequest_PayloadType_AllBranches(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.r.PayloadType())
+			if got := tt.r.PayloadType(); got != tt.want {
+				t.Fatalf("unexpected payload type: got %q want %q", got, tt.want)
+			}
 		})
 	}
 }
@@ -139,19 +191,29 @@ func TestResponse_PayloadType_AllBranches(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.r.PayloadType())
+			if got := tt.r.PayloadType(); got != tt.want {
+				t.Fatalf("unexpected payload type: got %q want %q", got, tt.want)
+			}
 		})
 	}
 }
 
 func TestRequestPayloadName_Implementations(t *testing.T) {
-	assert.Equal(t, "PunchOutOrderMessage", (&PunchOutOrderMessage{}).RequestPayloadName())
-	assert.Equal(t, "OrderRequest", (&OrderRequest{}).RequestPayloadName())
+	if got, want := (&PunchOutOrderMessage{}).RequestPayloadName(), "PunchOutOrderMessage"; got != want {
+		t.Fatalf("unexpected payload name: got %q want %q", got, want)
+	}
+	if got, want := (&OrderRequest{}).RequestPayloadName(), "OrderRequest"; got != want {
+		t.Fatalf("unexpected payload name: got %q want %q", got, want)
+	}
 }
 
 func TestMessagePayloadWrapper_ContentRoundTrip(t *testing.T) {
 	m := &Message{Payload: &PayloadWrapper{Content: `<Foo attr="1"/>`}}
 	out, err := xml.Marshal(m)
-	assert.NoError(t, err)
-	assert.True(t, strings.Contains(string(out), `<Payload><Foo attr="1"></Foo></Payload>`) || strings.Contains(string(out), `<Payload><Foo attr="1"/></Payload>`))
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	if !(strings.Contains(string(out), `<Payload><Foo attr="1"></Foo></Payload>`) || strings.Contains(string(out), `<Payload><Foo attr="1"/></Payload>`)) {
+		t.Fatalf("unexpected payload wrapper output: %s", string(out))
+	}
 }

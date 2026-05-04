@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBuilder_Basic(t *testing.T) {
@@ -17,16 +16,28 @@ func TestBuilder_Basic(t *testing.T) {
 		Sender(&model.Sender{UserAgent: "go-cxml"}).
 		Build()
 
-	assert.NotNil(t, doc)
-	assert.Equal(t, "p1", doc.PayloadID)
-	assert.Equal(t, "From", doc.From.Identity)
-	assert.Equal(t, "To", doc.To.Identity)
+	if doc == nil {
+		t.Fatal("expected built doc")
+	}
+	if got, want := doc.PayloadID, "p1"; got != want {
+		t.Fatalf("unexpected payloadID: got %q want %q", got, want)
+	}
+	if got, want := doc.From.Identity, "From"; got != want {
+		t.Fatalf("unexpected from identity: got %q want %q", got, want)
+	}
+	if got, want := doc.To.Identity, "To"; got != want {
+		t.Fatalf("unexpected to identity: got %q want %q", got, want)
+	}
 }
 
 func TestBuilder_BuildError(t *testing.T) {
 	doc := New().BuildError("500", "Server Error")
-	assert.NotNil(t, doc.Response)
-	assert.Equal(t, "500", doc.Response.Status.Code)
+	if doc.Response == nil {
+		t.Fatal("expected response")
+	}
+	if got, want := doc.Response.Status.Code, "500"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestBuilder_ResponseMessageStatus(t *testing.T) {
@@ -37,11 +48,21 @@ func TestBuilder_ResponseMessageStatus(t *testing.T) {
 		Status(&model.Status{Code: "299"}).
 		Build()
 
-	assert.NotNil(t, doc.Message)
-	assert.Nil(t, doc.Request)
-	assert.Nil(t, doc.Response)
-	assert.NotNil(t, doc.Status)
-	assert.Equal(t, "299", doc.Status.Code)
+	if doc.Message == nil {
+		t.Fatal("expected message")
+	}
+	if doc.Request != nil {
+		t.Fatal("expected request to be cleared")
+	}
+	if doc.Response != nil {
+		t.Fatal("expected response to be cleared")
+	}
+	if doc.Status == nil {
+		t.Fatal("expected status")
+	}
+	if got, want := doc.Status.Code, "299"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestOrderRequestBuilder(t *testing.T) {
@@ -58,11 +79,18 @@ func TestOrderRequestBuilder(t *testing.T) {
 		Request(order).
 		Build()
 
-	assert.NotNil(t, doc)
-	assert.NotNil(t, doc.Request)
-	assert.Equal(t, "order-1", doc.Request.OrderRequest.OrderRequestHeader.OrderID)
-	assert.Equal(t, "2026-03-24T00:00:00", doc.Timestamp)
-	assert.Equal(t, "1.2.014", doc.Version)
+	if doc == nil || doc.Request == nil {
+		t.Fatal("expected built request doc")
+	}
+	if got, want := doc.Request.OrderRequest.OrderRequestHeader.OrderID, "order-1"; got != want {
+		t.Fatalf("unexpected order id: got %q want %q", got, want)
+	}
+	if got, want := doc.Timestamp, "2026-03-24T00:00:00"; got != want {
+		t.Fatalf("unexpected timestamp: got %q want %q", got, want)
+	}
+	if got, want := doc.Version, "1.2.014"; got != want {
+		t.Fatalf("unexpected version: got %q want %q", got, want)
+	}
 }
 
 func TestOrderChangeBuilder(t *testing.T) {
@@ -76,11 +104,18 @@ func TestOrderChangeBuilder(t *testing.T) {
 		Request(change).
 		Build()
 
-	assert.NotNil(t, doc)
-	assert.NotNil(t, doc.Request)
-	assert.Equal(t, "order-1", doc.Request.OrderChangeRequest.OrderRequestReference.OrderID)
-	assert.Equal(t, "2026-03-24T00:00:00", doc.Timestamp)
-	assert.Equal(t, "1.2.014", doc.Version)
+	if doc == nil || doc.Request == nil {
+		t.Fatal("expected built request doc")
+	}
+	if got, want := doc.Request.OrderChangeRequest.OrderRequestReference.OrderID, "order-1"; got != want {
+		t.Fatalf("unexpected order id: got %q want %q", got, want)
+	}
+	if got, want := doc.Timestamp, "2026-03-24T00:00:00"; got != want {
+		t.Fatalf("unexpected timestamp: got %q want %q", got, want)
+	}
+	if got, want := doc.Version, "1.2.014"; got != want {
+		t.Fatalf("unexpected version: got %q want %q", got, want)
+	}
 }
 
 func TestShipNoticeBuilder(t *testing.T) {
@@ -101,12 +136,18 @@ func TestShipNoticeBuilder(t *testing.T) {
 		Request(sn).
 		Build()
 
-	assert.NotNil(t, doc)
-	assert.NotNil(t, doc.Request)
-	assert.NotNil(t, doc.Request.ShipNoticeRequest)
-	assert.Equal(t, "SN-001", doc.Request.ShipNoticeRequest.ShipNoticeHeader.ShipmentID)
-	assert.Equal(t, "ShipNoticeRequest", doc.Request.PayloadType())
-	assert.Equal(t, "1.2.069", doc.Version)
+	if doc == nil || doc.Request == nil || doc.Request.ShipNoticeRequest == nil {
+		t.Fatal("expected built ship notice request")
+	}
+	if got, want := doc.Request.ShipNoticeRequest.ShipNoticeHeader.ShipmentID, "SN-001"; got != want {
+		t.Fatalf("unexpected shipment id: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "ShipNoticeRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if got, want := doc.Version, "1.2.069"; got != want {
+		t.Fatalf("unexpected version: got %q want %q", got, want)
+	}
 }
 
 func TestInvoiceDetailBuilder(t *testing.T) {
@@ -127,10 +168,16 @@ func TestInvoiceDetailBuilder(t *testing.T) {
 		Request(inv).
 		Build()
 
-	assert.NotNil(t, doc)
-	assert.NotNil(t, doc.Request)
-	assert.NotNil(t, doc.Request.InvoiceDetailRequest)
-	assert.Equal(t, "INV-001", doc.Request.InvoiceDetailRequest.InvoiceDetailRequestHeader.InvoiceID)
-	assert.Equal(t, "InvoiceDetailRequest", doc.Request.PayloadType())
-	assert.Equal(t, "1.2.069", doc.Version)
+	if doc == nil || doc.Request == nil || doc.Request.InvoiceDetailRequest == nil {
+		t.Fatal("expected built invoice detail request")
+	}
+	if got, want := doc.Request.InvoiceDetailRequest.InvoiceDetailRequestHeader.InvoiceID, "INV-001"; got != want {
+		t.Fatalf("unexpected invoice id: got %q want %q", got, want)
+	}
+	if got, want := doc.Request.PayloadType(), "InvoiceDetailRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
+	if got, want := doc.Version, "1.2.069"; got != want {
+		t.Fatalf("unexpected version: got %q want %q", got, want)
+	}
 }

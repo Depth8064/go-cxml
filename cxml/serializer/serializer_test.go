@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 type encoderStub struct {
@@ -43,16 +43,31 @@ func TestSerializeAndDeserialize(t *testing.T) {
 
 	s := NewSerializer()
 	encoded, err := s.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "<?xml")
-	assert.Contains(t, string(encoded), "OrderRequest")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "<?xml") {
+		t.Fatal("expected xml header")
+	}
+	if !strings.Contains(string(encoded), "OrderRequest") {
+		t.Fatal("expected OrderRequest payload in output")
+	}
 
 	decoded, err := s.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.Equal(t, "12345", decoded.PayloadID)
-	if assert.NotNil(t, decoded.Request) {
-		assert.NotNil(t, decoded.Request.OrderRequest)
-		assert.Equal(t, "PO-1001", decoded.Request.OrderRequest.OrderRequestHeader.OrderID)
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if got, want := decoded.PayloadID, "12345"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
+	if decoded.Request == nil {
+		t.Fatal("expected request")
+	}
+	if decoded.Request.OrderRequest == nil {
+		t.Fatal("expected order request")
+	}
+	if got, want := decoded.Request.OrderRequest.OrderRequestHeader.OrderID, "PO-1001"; got != want {
+		t.Fatalf("unexpected order id: got %q want %q", got, want)
 	}
 }
 
@@ -78,10 +93,18 @@ func TestDeserializeWithDoctype(t *testing.T) {
 
 	s := NewSerializer()
 	decoded, err := s.Deserialize([]byte(xmlStr))
-	assert.NoError(t, err)
-	assert.Equal(t, "abc", decoded.PayloadID)
-	assert.NotNil(t, decoded.Request)
-	assert.Equal(t, "PO-99", decoded.Request.OrderRequest.OrderRequestHeader.OrderID)
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if got, want := decoded.PayloadID, "abc"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
+	if decoded.Request == nil {
+		t.Fatal("expected request")
+	}
+	if got, want := decoded.Request.OrderRequest.OrderRequestHeader.OrderID, "PO-99"; got != want {
+		t.Fatalf("unexpected order id: got %q want %q", got, want)
+	}
 }
 
 func TestSerializeAndDeserialize_PunchOutOrderMessage(t *testing.T) {
@@ -92,14 +115,23 @@ func TestSerializeAndDeserialize_PunchOutOrderMessage(t *testing.T) {
 
 	s := NewSerializer()
 	encoded, err := s.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "PunchOutOrderMessage")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "PunchOutOrderMessage") {
+		t.Fatal("expected punchout payload in output")
+	}
 
 	decoded, err := s.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.NotNil(t, decoded.Request)
-	assert.NotNil(t, decoded.Request.PunchOutOrderMessage)
-	assert.Equal(t, "create", decoded.Request.PunchOutOrderMessage.PunchOutOrderMessageHeader.Operation)
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if decoded.Request == nil || decoded.Request.PunchOutOrderMessage == nil {
+		t.Fatal("expected punchout order message")
+	}
+	if got, want := decoded.Request.PunchOutOrderMessage.PunchOutOrderMessageHeader.Operation, "create"; got != want {
+		t.Fatalf("unexpected operation: got %q want %q", got, want)
+	}
 }
 
 func TestSerializeAndDeserialize_ShipNoticeRequest(t *testing.T) {
@@ -118,16 +150,26 @@ func TestSerializeAndDeserialize_ShipNoticeRequest(t *testing.T) {
 
 	s := NewSerializer()
 	encoded, err := s.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "ShipNoticeRequest")
-	assert.Contains(t, string(encoded), "SHIP-42")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "ShipNoticeRequest") || !strings.Contains(string(encoded), "SHIP-42") {
+		t.Fatal("expected ship notice content in output")
+	}
 
 	decoded, err := s.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.NotNil(t, decoded.Request)
-	assert.NotNil(t, decoded.Request.ShipNoticeRequest)
-	assert.Equal(t, "SHIP-42", decoded.Request.ShipNoticeRequest.ShipNoticeHeader.ShipmentID)
-	assert.Equal(t, "ShipNoticeRequest", decoded.Request.PayloadType())
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if decoded.Request == nil || decoded.Request.ShipNoticeRequest == nil {
+		t.Fatal("expected ship notice request")
+	}
+	if got, want := decoded.Request.ShipNoticeRequest.ShipNoticeHeader.ShipmentID, "SHIP-42"; got != want {
+		t.Fatalf("unexpected shipment id: got %q want %q", got, want)
+	}
+	if got, want := decoded.Request.PayloadType(), "ShipNoticeRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
 }
 
 func TestSerializeAndDeserialize_InvoiceDetailRequest(t *testing.T) {
@@ -150,16 +192,26 @@ func TestSerializeAndDeserialize_InvoiceDetailRequest(t *testing.T) {
 
 	s := NewSerializer()
 	encoded, err := s.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "InvoiceDetailRequest")
-	assert.Contains(t, string(encoded), "INV-99")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "InvoiceDetailRequest") || !strings.Contains(string(encoded), "INV-99") {
+		t.Fatal("expected invoice detail content in output")
+	}
 
 	decoded, err := s.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.NotNil(t, decoded.Request)
-	assert.NotNil(t, decoded.Request.InvoiceDetailRequest)
-	assert.Equal(t, "INV-99", decoded.Request.InvoiceDetailRequest.InvoiceDetailRequestHeader.InvoiceID)
-	assert.Equal(t, "InvoiceDetailRequest", decoded.Request.PayloadType())
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if decoded.Request == nil || decoded.Request.InvoiceDetailRequest == nil {
+		t.Fatal("expected invoice detail request")
+	}
+	if got, want := decoded.Request.InvoiceDetailRequest.InvoiceDetailRequestHeader.InvoiceID, "INV-99"; got != want {
+		t.Fatalf("unexpected invoice id: got %q want %q", got, want)
+	}
+	if got, want := decoded.Request.PayloadType(), "InvoiceDetailRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
 }
 
 func TestSerializeAndDeserialize_ConfirmationRequest(t *testing.T) {
@@ -179,38 +231,62 @@ func TestSerializeAndDeserialize_ConfirmationRequest(t *testing.T) {
 
 	s := NewSerializer()
 	encoded, err := s.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "ConfirmationRequest")
-	assert.Contains(t, string(encoded), "CONF-1")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "ConfirmationRequest") || !strings.Contains(string(encoded), "CONF-1") {
+		t.Fatal("expected confirmation content in output")
+	}
 
 	decoded, err := s.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.NotNil(t, decoded.Request)
-	assert.NotNil(t, decoded.Request.ConfirmationRequest)
-	assert.Equal(t, "CONF-1", decoded.Request.ConfirmationRequest.ConfirmationHeader.ConfirmID)
-	assert.Equal(t, "PO-123", decoded.Request.ConfirmationRequest.OrderReference.OrderID)
-	assert.Equal(t, "ConfirmationRequest", decoded.Request.PayloadType())
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if decoded.Request == nil || decoded.Request.ConfirmationRequest == nil {
+		t.Fatal("expected confirmation request")
+	}
+	if got, want := decoded.Request.ConfirmationRequest.ConfirmationHeader.ConfirmID, "CONF-1"; got != want {
+		t.Fatalf("unexpected confirm id: got %q want %q", got, want)
+	}
+	if got, want := decoded.Request.ConfirmationRequest.OrderReference.OrderID, "PO-123"; got != want {
+		t.Fatalf("unexpected order reference: got %q want %q", got, want)
+	}
+	if got, want := decoded.Request.PayloadType(), "ConfirmationRequest"; got != want {
+		t.Fatalf("unexpected payload type: got %q want %q", got, want)
+	}
 }
 
 func TestSerializeNilDocument(t *testing.T) {
 	s := NewSerializer()
 	out, err := s.Serialize(nil)
-	assert.Error(t, err)
-	assert.Nil(t, out)
+	if err == nil {
+		t.Fatal("expected serialize error")
+	}
+	if out != nil {
+		t.Fatal("expected nil output on error")
+	}
 }
 
 func TestDeserializeEmptyInput(t *testing.T) {
 	s := NewSerializer()
 	doc, err := s.Deserialize(nil)
-	assert.Error(t, err)
-	assert.Nil(t, doc)
+	if err == nil {
+		t.Fatal("expected deserialize error")
+	}
+	if doc != nil {
+		t.Fatal("expected nil doc on error")
+	}
 }
 
 func TestDeserializeInvalidXML(t *testing.T) {
 	s := NewSerializer()
 	doc, err := s.Deserialize([]byte(`<cXML><Request></cXML>`))
-	assert.Error(t, err)
-	assert.Nil(t, doc)
+	if err == nil {
+		t.Fatal("expected deserialize error")
+	}
+	if doc != nil {
+		t.Fatal("expected nil doc on error")
+	}
 }
 
 func TestSerialize_EncodeError(t *testing.T) {
@@ -221,8 +297,15 @@ func TestSerialize_EncodeError(t *testing.T) {
 	}
 
 	out, err := s.Serialize(&model.CXML{PayloadID: "x"})
-	assert.EqualError(t, err, "encode failed")
-	assert.Nil(t, out)
+	if err == nil {
+		t.Fatal("expected encode error")
+	}
+	if got, want := err.Error(), "encode failed"; got != want {
+		t.Fatalf("unexpected error: got %q want %q", got, want)
+	}
+	if out != nil {
+		t.Fatal("expected nil output on error")
+	}
 }
 
 func TestSerialize_FlushError(t *testing.T) {
@@ -233,6 +316,13 @@ func TestSerialize_FlushError(t *testing.T) {
 	}
 
 	out, err := s.Serialize(&model.CXML{PayloadID: "x"})
-	assert.EqualError(t, err, "flush failed")
-	assert.Nil(t, out)
+	if err == nil {
+		t.Fatal("expected flush error")
+	}
+	if got, want := err.Error(), "flush failed"; got != want {
+		t.Fatalf("unexpected error: got %q want %q", got, want)
+	}
+	if out != nil {
+		t.Fatal("expected nil output on error")
+	}
 }

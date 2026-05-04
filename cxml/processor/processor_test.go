@@ -6,7 +6,6 @@ import (
 
 	"github.com/Depth8064/go-cxml/cxml/handler"
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 type stubOrderHandler struct{}
@@ -59,10 +58,18 @@ func TestProcessor_Process_OrderRequest(t *testing.T) {
 	req := &model.CXML{PayloadID: "x1", Request: &model.Request{OrderRequest: &model.OrderRequest{OrderRequestHeader: &model.OrderRequestHeader{OrderID: "PO"}}}}
 	resp, err := p.Process(req)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.Equal(t, "x1", resp.PayloadID)
-	assert.Equal(t, "200", resp.Response.Status.Code)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected response")
+	}
+	if got, want := resp.PayloadID, "x1"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
+	if got, want := resp.Response.Status.Code, "200"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestProcessor_Process_PunchOutOrderMessage(t *testing.T) {
@@ -74,10 +81,18 @@ func TestProcessor_Process_PunchOutOrderMessage(t *testing.T) {
 	req := &model.CXML{PayloadID: "x2", Request: &model.Request{PunchOutOrderMessage: &model.PunchOutOrderMessage{PunchOutOrderMessageHeader: &model.PunchOutOrderMessageHeader{Operation: "create"}}}}
 	resp, err := p.Process(req)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.Equal(t, "x2", resp.PayloadID)
-	assert.Equal(t, "201", resp.Response.Status.Code)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected response")
+	}
+	if got, want := resp.PayloadID, "x2"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
+	if got, want := resp.Response.Status.Code, "201"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestProcessor_Process_OrderChangeRequest(t *testing.T) {
@@ -89,35 +104,55 @@ func TestProcessor_Process_OrderChangeRequest(t *testing.T) {
 	req := &model.CXML{PayloadID: "x3", Request: &model.Request{OrderChangeRequest: &model.OrderChangeRequest{OrderRequestReference: &model.OrderRequestHeader{OrderID: "PO123"}}}}
 	resp, err := p.Process(req)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.Equal(t, "x3", resp.PayloadID)
-	assert.Equal(t, "202", resp.Response.Status.Code)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected response")
+	}
+	if got, want := resp.PayloadID, "x3"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
+	if got, want := resp.Response.Status.Code, "202"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestProcessor_Process_NoHandler(t *testing.T) {
 	p := NewProcessor(handler.NewRegistry())
 	_, err := p.Process(&model.CXML{Request: &model.Request{OrderRequest: &model.OrderRequest{}}})
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatal("expected error for missing handler")
+	}
 }
 
 func TestProcessor_NewProcessor_NilRegistry(t *testing.T) {
 	p := NewProcessor(nil)
-	assert.NotNil(t, p)
+	if p == nil {
+		t.Fatal("expected processor instance")
+	}
 }
 
 func TestProcessor_Process_NilDocument(t *testing.T) {
 	p := NewProcessor(nil)
 	resp, err := p.Process(nil)
-	assert.Error(t, err)
-	assert.Nil(t, resp)
+	if err == nil {
+		t.Fatal("expected error for nil document")
+	}
+	if resp != nil {
+		t.Fatal("expected nil response on error")
+	}
 }
 
 func TestProcessor_Process_UnsupportedPayload(t *testing.T) {
 	p := NewProcessor(handler.NewRegistry())
 	resp, err := p.Process(&model.CXML{})
-	assert.Error(t, err)
-	assert.Nil(t, resp)
+	if err == nil {
+		t.Fatal("expected error for unsupported payload")
+	}
+	if resp != nil {
+		t.Fatal("expected nil response on error")
+	}
 }
 
 func TestProcessor_Process_ResponsePayload(t *testing.T) {
@@ -126,8 +161,12 @@ func TestProcessor_Process_ResponsePayload(t *testing.T) {
 	p := NewProcessor(reg)
 
 	resp, err := p.Process(&model.CXML{PayloadID: "resp1", Response: &model.Response{Status: &model.Status{Code: "200"}}})
-	assert.NoError(t, err)
-	assert.Equal(t, "299", resp.Response.Status.Code)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if got, want := resp.Response.Status.Code, "299"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }
 
 func TestProcessor_Process_MessagePayload(t *testing.T) {
@@ -136,6 +175,10 @@ func TestProcessor_Process_MessagePayload(t *testing.T) {
 	p := NewProcessor(reg)
 
 	resp, err := p.Process(&model.CXML{PayloadID: "msg1", Message: &model.Message{Subject: "hello"}})
-	assert.NoError(t, err)
-	assert.Equal(t, "299", resp.Response.Status.Code)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if got, want := resp.Response.Status.Code, "299"; got != want {
+		t.Fatalf("unexpected status code: got %q want %q", got, want)
+	}
 }

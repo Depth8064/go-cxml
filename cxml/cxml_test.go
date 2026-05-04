@@ -1,10 +1,10 @@
 package cxml
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestEndpoint_SerializeDeserialize(t *testing.T) {
@@ -18,26 +18,42 @@ func TestEndpoint_SerializeDeserialize(t *testing.T) {
 	}
 
 	encoded, err := e.Serialize(doc)
-	assert.NoError(t, err)
-	assert.Contains(t, string(encoded), "OrderRequest")
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), "OrderRequest") {
+		t.Fatal("expected serialized output to contain OrderRequest")
+	}
 
 	decoded, err := e.Deserialize(encoded)
-	assert.NoError(t, err)
-	assert.Equal(t, "p-1", decoded.PayloadID)
+	if err != nil {
+		t.Fatalf("deserialize failed: %v", err)
+	}
+	if got, want := decoded.PayloadID, "p-1"; got != want {
+		t.Fatalf("unexpected payload id: got %q want %q", got, want)
+	}
 }
 
 func TestEndpoint_SerializeNil(t *testing.T) {
 	e := NewEndpoint()
 
 	encoded, err := e.Serialize(nil)
-	assert.Error(t, err)
-	assert.Nil(t, encoded)
+	if err == nil {
+		t.Fatal("expected serialize error for nil input")
+	}
+	if encoded != nil {
+		t.Fatal("expected nil encoded output on error")
+	}
 }
 
 func TestEndpoint_DeserializeEmpty(t *testing.T) {
 	e := NewEndpoint()
 
 	doc, err := e.Deserialize(nil)
-	assert.Error(t, err)
-	assert.Nil(t, doc)
+	if err == nil {
+		t.Fatal("expected deserialize error for empty input")
+	}
+	if doc != nil {
+		t.Fatal("expected nil document on error")
+	}
 }

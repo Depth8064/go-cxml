@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
-	"github.com/stretchr/testify/assert"
 )
 
 type repoStub struct {
@@ -22,25 +21,36 @@ func (r *repoStub) Count() int { return r.count }
 
 func TestNewSimpleSharedSecretAuthenticator(t *testing.T) {
 	a := NewSimpleSharedSecretAuthenticator()
-	assert.NotNil(t, a)
+	if a == nil {
+		t.Fatal("expected authenticator instance")
+	}
 }
 
 func TestAuthenticate_OpenAccessWhenNoRepo(t *testing.T) {
 	a := NewSimpleSharedSecretAuthenticator()
 	err := a.Authenticate(&model.CXML{}, nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }
 
 func TestAuthenticate_OpenAccessWhenRepoEmpty(t *testing.T) {
 	a := NewSimpleSharedSecretAuthenticator()
 	err := a.Authenticate(&model.CXML{}, &repoStub{count: 0})
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }
 
 func TestAuthenticate_MissingCredential(t *testing.T) {
 	a := NewSimpleSharedSecretAuthenticator()
 	err := a.Authenticate(&model.CXML{}, &repoStub{count: 1, validate: true})
-	assert.EqualError(t, err, "auth: missing sender credential")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if got, want := err.Error(), "auth: missing sender credential"; got != want {
+		t.Fatalf("unexpected error: got %q want %q", got, want)
+	}
 }
 
 func TestAuthenticate_InvalidCredential(t *testing.T) {
@@ -48,7 +58,12 @@ func TestAuthenticate_InvalidCredential(t *testing.T) {
 	err := a.Authenticate(&model.CXML{
 		Sender: &model.Sender{Credential: &model.Credential{Domain: "d", Identity: "i", SharedSecret: "s"}},
 	}, &repoStub{count: 1, validate: false})
-	assert.EqualError(t, err, "auth: invalid shared secret")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if got, want := err.Error(), "auth: invalid shared secret"; got != want {
+		t.Fatalf("unexpected error: got %q want %q", got, want)
+	}
 }
 
 func TestAuthenticate_ValidCredential(t *testing.T) {
@@ -56,5 +71,7 @@ func TestAuthenticate_ValidCredential(t *testing.T) {
 	err := a.Authenticate(&model.CXML{
 		Sender: &model.Sender{Credential: &model.Credential{Domain: "d", Identity: "i", SharedSecret: "s"}},
 	}, &repoStub{count: 1, validate: true})
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }

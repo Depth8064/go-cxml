@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDTDValidator_LocalDTDSucceeds(t *testing.T) {
@@ -51,5 +49,7 @@ func TestDTDValidator_LocalDTDSucceeds(t *testing.T) {
 
 	validator := NewDTDValidator()
 	err := validator.Validate(xml)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }
