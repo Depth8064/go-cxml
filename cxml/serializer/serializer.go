@@ -38,9 +38,8 @@ func (s *Serializer) Serialize(c *model.CXML) ([]byte, error) {
 	buf := s.newBuffer()
 	buf.WriteString(xml.Header)
 
-	// Optional DOCTYPE maybe derived from c.Version or DTD not attached yet.
-	if strings.TrimSpace(c.Version) != "" {
-		buf.WriteString("<!DOCTYPE cXML SYSTEM \"http://xml.cxml.org/schemas/cXML/1.2.014/cXML.dtd\">\n")
+	if v := strings.TrimSpace(c.Version); v != "" {
+		buf.WriteString("<!DOCTYPE cXML SYSTEM \"http://xml.cxml.org/schemas/cXML/" + v + "/cXML.dtd\">\n")
 	}
 
 	enc := s.newEncoder(buf)
@@ -56,21 +55,40 @@ func (s *Serializer) Serialize(c *model.CXML) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// stripDoctype removes a <!DOCTYPE ...> declaration from s, handling both
+// the simple form (ends at '>') and the internal-subset form (ends at ']>').
+func stripDoctype(s string) string {
+	idx := strings.Index(s, "<!DOCTYPE")
+	if idx < 0 {
+		return s
+	}
+	rest := s[idx:]
+	depth := 0
+	for i := 0; i < len(rest); i++ {
+		switch rest[i] {
+		case '[':
+			depth++
+		case ']':
+			if depth > 0 {
+				depth--
+			}
+		case '>':
+			if depth == 0 {
+				return s[:idx] + rest[i+1:]
+			}
+		}
+	}
+	// Malformed DOCTYPE — return original unchanged.
+	return s
+}
+
 func (s *Serializer) Deserialize(data []byte) (*model.CXML, error) {
 	input := bytes.TrimSpace(data)
 	if len(input) == 0 {
 		return nil, errors.New("cxml: empty input")
 	}
 
-	// Strip DOCTYPE if present (basic approach)
-	str := string(input)
-	if idx := strings.Index(str, "<!DOCTYPE"); idx >= 0 {
-		start := idx
-		end := strings.Index(str[idx:], ">")
-		if end > 0 {
-			str = str[:start] + str[idx+end+1:]
-		}
-	}
+	str := stripDoctype(string(input))
 
 	var doc model.CXML
 	if err := xml.Unmarshal([]byte(str), &doc); err != nil {

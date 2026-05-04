@@ -289,6 +289,65 @@ func TestDeserializeInvalidXML(t *testing.T) {
 	}
 }
 
+func TestSerialize_DocTypeVersionDerived(t *testing.T) {
+	s := NewSerializer()
+
+	// Version set — DOCTYPE should contain that version.
+	out, err := s.Serialize(&model.CXML{Version: "1.2.069"})
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if !strings.Contains(string(out), "1.2.069/cXML.dtd") {
+		t.Fatalf("expected version 1.2.069 in DOCTYPE, got:\n%s", string(out))
+	}
+	if strings.Contains(string(out), "1.2.014") {
+		t.Fatal("must not hardcode 1.2.014 when version is 1.2.069")
+	}
+
+	// No version — DOCTYPE should be omitted.
+	outNoVer, err := s.Serialize(&model.CXML{})
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	if strings.Contains(string(outNoVer), "<!DOCTYPE") {
+		t.Fatal("expected no DOCTYPE when version is empty")
+	}
+}
+
+func TestStripDoctype(t *testing.T) {
+	// No DOCTYPE → unchanged.
+	plain := `<cXML payloadID="x"/>`
+	if got := stripDoctype(plain); got != plain {
+		t.Fatalf("expected no change without DOCTYPE, got %q", got)
+	}
+
+	// Simple form (no internal subset).
+	simple := `<?xml version="1.0"?><!DOCTYPE cXML SYSTEM "x.dtd"><cXML/>`
+	stripped := stripDoctype(simple)
+	if strings.Contains(stripped, "DOCTYPE") {
+		t.Fatalf("expected DOCTYPE stripped, got %q", stripped)
+	}
+	if !strings.Contains(stripped, "<cXML/>") {
+		t.Fatalf("expected element preserved after stripping, got %q", stripped)
+	}
+
+	// Internal subset form — DOCTYPE with [...].
+	subset := `<?xml version="1.0"?><!DOCTYPE cXML [<!ENTITY foo "bar">]><cXML/>`
+	strippedSubset := stripDoctype(subset)
+	if strings.Contains(strippedSubset, "DOCTYPE") {
+		t.Fatalf("expected internal-subset DOCTYPE stripped, got %q", strippedSubset)
+	}
+	if !strings.Contains(strippedSubset, "<cXML/>") {
+		t.Fatalf("expected element preserved after internal-subset stripping, got %q", strippedSubset)
+	}
+
+	// Malformed DOCTYPE (internal subset opened but never closed) → returned unchanged.
+	malformed := `<!DOCTYPE cXML [<!ENTITY foo "bar"`
+	if got := stripDoctype(malformed); got != malformed {
+		t.Fatalf("expected malformed DOCTYPE to be returned unchanged, got %q", got)
+	}
+}
+
 func TestSerialize_EncodeError(t *testing.T) {
 	s := NewSerializer()
 	s.newBuffer = func() *bytes.Buffer { return &bytes.Buffer{} }
