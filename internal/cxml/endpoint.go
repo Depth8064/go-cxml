@@ -5,7 +5,7 @@ import (
 	"github.com/Depth8064/go-cxml/cxml/serializer"
 )
 
-// Endpoint is the primary entry point for cXML processing.
+// Endpoint is the primary entry point for simple cXML serialization.
 type Endpoint struct {
 	serializer *serializer.Serializer
 }

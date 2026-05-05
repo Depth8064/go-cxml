@@ -22,7 +22,11 @@ This module is:
 
 - `github.com/Depth8064/go-cxml`
 
-Most consumers import packages under:
+For the simple serialize/deserialize entry point, prefer importing the module root:
+
+- `github.com/Depth8064/go-cxml`
+
+Granular packages remain available under:
 
 - `github.com/Depth8064/go-cxml/cxml/...`
 
@@ -30,7 +34,7 @@ Example:
 
 ```go
 import (
-	"github.com/Depth8064/go-cxml/cxml"
+	"github.com/Depth8064/go-cxml"
 	"github.com/Depth8064/go-cxml/cxml/model"
 )
 ```
@@ -51,7 +55,7 @@ package main
 import (
 	"fmt"
 
-	gcxml "github.com/Depth8064/go-cxml/cxml"
+	gcxml "github.com/Depth8064/go-cxml"
 	"github.com/Depth8064/go-cxml/cxml/model"
 )
 
@@ -88,7 +92,9 @@ The full-pipeline endpoint in `cxml/endpoint` runs:
 4. Route payload to registered handler
 5. Serialize response cXML
 
-Use `cxml/endpoint` when receiving inbound cXML. Use `cxml` (the root shim) when you only need serialization.
+Use `cxml/endpoint` when receiving inbound cXML. Use the module root package when you only need simple serialization.
+
+This is a breaking cleanup: the old entry-point import path `github.com/Depth8064/go-cxml/cxml` has been removed. Import `github.com/Depth8064/go-cxml` instead.
 
 ```go
 package main
