@@ -62,6 +62,7 @@ func TestInMemoryRegistry_ConcurrentSaveAndGet(t *testing.T) {
 	const writesPerWorker = 200
 
 	var wg sync.WaitGroup
+	errCh := make(chan error, workers)
 	wg.Add(workers)
 
 	for w := 0; w < workers; w++ {
@@ -74,13 +75,21 @@ func TestInMemoryRegistry_ConcurrentSaveAndGet(t *testing.T) {
 				reg.Save(id, doc)
 
 				if got, ok := reg.Get(id); !ok || got == nil || got.PayloadID != id {
-					t.Fatalf("expected to retrieve payload %s", id)
+					errCh <- fmt.Errorf("expected to retrieve payload %s", id)
+					return
 				}
 			}
 		}(w)
 	}
 
 	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	// Spot-check a few known keys from different workers.
 	for _, id := range []string{"p-0-0", "p-1-199", "p-63-42"} {
