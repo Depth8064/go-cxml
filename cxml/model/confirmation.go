@@ -86,9 +86,11 @@ type OrderStatusRequestIDInfo struct {
 }
 
 type ScheduleLineReference struct {
-	XMLName            xml.Name `xml:"ScheduleLineReference"`
-	LineNumber         string   `xml:"lineNumber,attr,omitempty"`
-	ScheduleLineNumber string   `xml:"scheduleLineNumber,attr,omitempty"`
+	XMLName               xml.Name     `xml:"ScheduleLineReference"`
+	Quantity              string       `xml:"quantity,attr,omitempty"`
+	RequestedDeliveryDate string       `xml:"requestedDeliveryDate,attr,omitempty"`
+	LineNumber            string       `xml:"lineNumber,attr,omitempty"`
+	Extrinsic             []*Extrinsic `xml:"Extrinsic,omitempty"`
 }
 
 type ComponentConsumptionDetail struct {
