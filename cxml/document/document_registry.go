@@ -1,6 +1,10 @@
 package document
 
-import "github.com/Depth8064/go-cxml/cxml/model"
+import (
+	"sync"
+
+	"github.com/Depth8064/go-cxml/cxml/model"
+)
 
 type DocumentRegistry interface {
 	Save(payloadID string, doc *model.CXML)
@@ -8,6 +12,7 @@ type DocumentRegistry interface {
 }
 
 type InMemoryRegistry struct {
+	mu    sync.RWMutex
 	store map[string]*model.CXML
 }
 
@@ -16,6 +21,9 @@ func NewInMemoryRegistry() *InMemoryRegistry {
 }
 
 func (r *InMemoryRegistry) Save(payloadID string, doc *model.CXML) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r.store == nil {
 		r.store = map[string]*model.CXML{}
 	}
@@ -23,6 +31,9 @@ func (r *InMemoryRegistry) Save(payloadID string, doc *model.CXML) {
 }
 
 func (r *InMemoryRegistry) Get(payloadID string) (*model.CXML, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.store == nil {
 		return nil, false
 	}

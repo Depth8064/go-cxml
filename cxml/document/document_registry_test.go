@@ -1,6 +1,8 @@
 package document
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/Depth8064/go-cxml/cxml/model"
@@ -50,5 +52,40 @@ func TestInMemoryRegistry_GetOnNilStore(t *testing.T) {
 	}
 	if got != nil {
 		t.Fatal("expected nil document when store is uninitialized")
+	}
+}
+
+func TestInMemoryRegistry_ConcurrentSaveAndGet(t *testing.T) {
+	reg := NewInMemoryRegistry()
+
+	const workers = 64
+	const writesPerWorker = 200
+
+	var wg sync.WaitGroup
+	wg.Add(workers)
+
+	for w := 0; w < workers; w++ {
+		go func(worker int) {
+			defer wg.Done()
+
+			for i := 0; i < writesPerWorker; i++ {
+				id := fmt.Sprintf("p-%d-%d", worker, i)
+				doc := &model.CXML{PayloadID: id}
+				reg.Save(id, doc)
+
+				if got, ok := reg.Get(id); !ok || got == nil || got.PayloadID != id {
+					t.Fatalf("expected to retrieve payload %s", id)
+				}
+			}
+		}(w)
+	}
+
+	wg.Wait()
+
+	// Spot-check a few known keys from different workers.
+	for _, id := range []string{"p-0-0", "p-1-199", "p-63-42"} {
+		if got, ok := reg.Get(id); !ok || got == nil || got.PayloadID != id {
+			t.Fatalf("expected payload %s to exist after concurrent writes", id)
+		}
 	}
 }
