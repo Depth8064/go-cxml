@@ -155,9 +155,64 @@ type ItemDetail struct {
 type ItemID struct {
 	XMLName                 xml.Name       `xml:"ItemID"`
 	SupplierPartID          string         `xml:"SupplierPartID,omitempty"`
+	SupplierPartRevision    string         `xml:"-"`
 	SupplierPartAuxiliaryID string         `xml:"SupplierPartAuxiliaryID,omitempty"`
 	BuyerPartID             string         `xml:"BuyerPartID,omitempty"`
 	IdReference             []*IdReference `xml:"IdReference,omitempty"`
+}
+
+func (i *ItemID) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	type supplierPartID struct {
+		Value      string `xml:",chardata"`
+		RevisionID string `xml:"revisionID,attr"`
+	}
+	type itemID struct {
+		XMLName                 xml.Name       `xml:"ItemID"`
+		SupplierPartID          supplierPartID `xml:"SupplierPartID"`
+		SupplierPartAuxiliaryID string         `xml:"SupplierPartAuxiliaryID"`
+		BuyerPartID             string         `xml:"BuyerPartID"`
+		IdReference             []*IdReference `xml:"IdReference"`
+	}
+
+	var parsed itemID
+	if err := d.DecodeElement(&parsed, &start); err != nil {
+		return err
+	}
+	i.XMLName = parsed.XMLName
+	i.SupplierPartID = parsed.SupplierPartID.Value
+	i.SupplierPartRevision = parsed.SupplierPartID.RevisionID
+	i.SupplierPartAuxiliaryID = parsed.SupplierPartAuxiliaryID
+	i.BuyerPartID = parsed.BuyerPartID
+	i.IdReference = parsed.IdReference
+	return nil
+}
+
+func (i ItemID) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type supplierPartID struct {
+		Value      string `xml:",chardata"`
+		RevisionID string `xml:"revisionID,attr,omitempty"`
+	}
+	type itemID struct {
+		XMLName                 xml.Name       `xml:"ItemID"`
+		SupplierPartID          supplierPartID `xml:"SupplierPartID,omitempty"`
+		SupplierPartAuxiliaryID string         `xml:"SupplierPartAuxiliaryID,omitempty"`
+		BuyerPartID             string         `xml:"BuyerPartID,omitempty"`
+		IdReference             []*IdReference `xml:"IdReference,omitempty"`
+	}
+
+	if start.Name.Local == "" {
+		start.Name = xml.Name{Local: "ItemID"}
+	}
+	return e.EncodeElement(itemID{
+		XMLName: start.Name,
+		SupplierPartID: supplierPartID{
+			Value:      i.SupplierPartID,
+			RevisionID: i.SupplierPartRevision,
+		},
+		SupplierPartAuxiliaryID: i.SupplierPartAuxiliaryID,
+		BuyerPartID:             i.BuyerPartID,
+		IdReference:             i.IdReference,
+	}, start)
 }
 
 // BusinessPartner associates an additional partner role with the order.

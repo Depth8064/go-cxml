@@ -88,6 +88,27 @@ func TestMoney_MarshalXML(t *testing.T) {
 	})
 }
 
+func TestItemIDRevisionRoundTrip(t *testing.T) {
+	var item ItemID
+	if err := xml.Unmarshal([]byte(`<ItemID><SupplierPartID revisionID="M">1143383/001</SupplierPartID><BuyerPartID>BP-1</BuyerPartID></ItemID>`), &item); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if item.SupplierPartID != "1143383/001" {
+		t.Fatalf("supplier part: got %q", item.SupplierPartID)
+	}
+	if item.SupplierPartRevision != "M" {
+		t.Fatalf("supplier part revision: got %q, want M", item.SupplierPartRevision)
+	}
+
+	out, err := xml.Marshal(item)
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	if got := string(out); !strings.Contains(got, `revisionID="M"`) || !strings.Contains(got, `>1143383/001</SupplierPartID>`) {
+		t.Fatalf("revision round trip missing from XML: %s", got)
+	}
+}
+
 func TestCXML_GetPayloadTypeAndFlags(t *testing.T) {
 	if got, want := (&CXML{}).GetPayloadType(), ""; got != want {
 		t.Fatalf("unexpected payload type: got %q want %q", got, want)
