@@ -109,6 +109,37 @@ func TestItemIDRevisionRoundTrip(t *testing.T) {
 	}
 }
 
+func TestItemIDUnmarshalXMLReturnsDecodeError(t *testing.T) {
+	decoder := xml.NewDecoder(strings.NewReader(`<ItemID>`))
+	tok, err := decoder.Token()
+	if err != nil {
+		t.Fatalf("read start token: %v", err)
+	}
+	start, ok := tok.(xml.StartElement)
+	if !ok {
+		t.Fatal("expected ItemID start token")
+	}
+
+	var item ItemID
+	if err := item.UnmarshalXML(decoder, start); err == nil {
+		t.Fatal("expected malformed ItemID error")
+	}
+}
+
+func TestItemIDMarshalXMLUsesDefaultElementName(t *testing.T) {
+	var builder strings.Builder
+	encoder := xml.NewEncoder(&builder)
+	if err := (ItemID{SupplierPartID: "P-1"}).MarshalXML(encoder, xml.StartElement{}); err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	if err := encoder.Flush(); err != nil {
+		t.Fatalf("flush failed: %v", err)
+	}
+	if got := builder.String(); !strings.Contains(got, `<ItemID>`) {
+		t.Fatalf("expected default ItemID element: %s", got)
+	}
+}
+
 func TestCXML_GetPayloadTypeAndFlags(t *testing.T) {
 	if got, want := (&CXML{}).GetPayloadType(), ""; got != want {
 		t.Fatalf("unexpected payload type: got %q want %q", got, want)
